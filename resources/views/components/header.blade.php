@@ -6,18 +6,11 @@
             @yield('header-title')
         </div>
 
-        {{-- SEARCH BAR (PAKAI KOMPONEN) --}}
-        <div class="flex-1 max-w-xl">
-            @include('components.search', [
-                'placeholder' => 'Cari dokumen atau folder...'
-            ])
-        </div>
-
         {{-- USER INFO --}}
         <div class="flex items-center gap-4">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 bg-purple-100 rounded-full flex items-center justify-center">
-                    <span class="text-purple-900 font-semibold text-sm">
+                    <span class="tex-purple-900 font-semibold text-sm">
                         {{ substr(Auth::guard('admin')->user()->nama_admin, 0, 1) }}
                     </span>
                 </div>

@@ -11,6 +11,7 @@
 
 @section('content')
     <div class="space-y-6">
+
         <!-- Search Bar -->
         <div class="bg-white rounded-lg shadow-sm p-6">
             @include('components.search', ['placeholder' => 'Cari dokumen atau folder...'])
@@ -48,7 +49,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     @foreach($folders as $folder)
                         <div class="group relative bg-gradient-to-br from-red-400 to-red-500 rounded-xl p-6 hover:from-red-500 hover:to-red-600 transition-all duration-300 shadow-md hover:shadow-xl transform hover:-translate-y-1">
-                            
+
                             <!-- Link ke folder -->
                             <a href="{{ route('mekanisme', ['folder' => $folder->id_folder_mek, 'search' => request('search')]) }}" class="block">
                                 <!-- Icon Folder -->
@@ -120,7 +121,7 @@
                     <span class="text-sm text-gray-500">({{ $files->total() }})</span>
                 @endif
             </h3>
-            
+
             <div class="space-y-3">
                 @forelse($files as $file)
                     <div class="relative p-4 border-2 border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all duration-300 group">
@@ -132,7 +133,7 @@
                                         <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
                                     </svg>
                                 </div>
-                                
+
                                 <!-- Info -->
                                 <div class="flex-1 min-w-0">
                                     <p class="font-semibold text-gray-900 truncate group-hover:text-blue-700 transition">
@@ -154,7 +155,7 @@
                                     </div>
                                 </div>
                             </a>
-                            
+
                             <!-- More Button -->
                             <div class="relative">
                                 <button onclick="event.preventDefault(); event.stopPropagation(); toggleDropdown('file-{{ $file->id_mekanisme }}')" class="p-2 hover:bg-gray-100 rounded-lg transition">
@@ -223,11 +224,11 @@
         function toggleDropdown(id) {
             const dropdown = document.getElementById(id);
             const allDropdowns = document.querySelectorAll('[id^="folder-"], [id^="file-"]');
-            
+
             allDropdowns.forEach(d => {
                 if (d.id !== id) d.classList.add('hidden');
             });
-            
+
             dropdown.classList.toggle('hidden');
         }
 
@@ -253,7 +254,7 @@
                         },
                         body: JSON.stringify({ name: newName })
                     });
-                    
+
                     const data = await response.json();
                     if (data.success) {
                         alert(data.message);
@@ -277,7 +278,7 @@
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         }
                     });
-                    
+
                     const data = await response.json();
                     if (data.success) {
                         alert(data.message);
@@ -304,7 +305,7 @@
                         },
                         body: JSON.stringify({ name: newName })
                     });
-                    
+
                     const data = await response.json();
                     if (data.success) {
                         alert(data.message);
@@ -328,7 +329,7 @@
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         }
                     });
-                    
+
                     const data = await response.json();
                     if (data.success) {
                         alert(data.message);

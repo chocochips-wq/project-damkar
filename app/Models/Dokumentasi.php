@@ -31,4 +31,32 @@ class Dokumentasi extends Model
     {
         return $this->hasMany(DokumentasiFile::class, 'id_kegiatan', 'id_kegiatan');
     }
+
+    public function getThumbnailAttribute($value)
+    {
+        // Jika thumbnail adalah link Google Drive
+        if ($value && str_contains($value, 'drive.google.com')) {
+            // Format 1: /file/d/ID/view
+            if (preg_match('/\/d\/([^\/]+)\//', $value, $matches)) {
+                return 'https://drive.google.com/uc?export=view&id=' . $matches[1];
+            }
+            // Format 2: ?id=ID
+            if (preg_match('/[?&]id=([^&]+)/', $value, $matches)) {
+                return 'https://drive.google.com/uc?export=view&id=' . $matches[1];
+            }
+        }
+
+        // Jika thumbnail lokal di public/images
+        if ($value && file_exists(public_path('images/' . $value))) {
+            return asset('images/' . $value);
+        }
+
+        // Jika di storage
+        if ($value && file_exists(storage_path('app/public/dokumentasi/' . $value))) {
+            return asset('storage/dokumentasi/' . $value);
+        }
+
+        // Default image jika tidak ditemukan
+        return asset('images/logo-damkar.png');
+    }
 }

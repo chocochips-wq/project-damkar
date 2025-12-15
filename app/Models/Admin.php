@@ -13,7 +13,7 @@ class Admin extends Authenticatable
     protected $primaryKey = 'id_admin';
     public $incrementing = false;
     protected $keyType = 'string';
-    public $timestamps = false;
+    public $timestamps = false; // PENTING: Set false karena tabel tidak punya timestamps
 
     protected $fillable = [
         'id_admin',

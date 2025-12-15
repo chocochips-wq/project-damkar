@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Admin;
 
 class PengaturanController extends Controller
 {
@@ -17,11 +18,20 @@ class PengaturanController extends Controller
     public function update(Request $request)
     {
         $admin = Auth::guard('admin')->user();
+        /** @var Admin $admin */
 
         $request->validate([
             'nama_admin' => 'required|string|max:50',
-            'username_admin' => 'required|string|max:20|unique:t_admin,username_admin,' . $admin->id_admin . ',id_admin',
+            'username_admin' => 'required|string|max:20|unique:t_admin,username_admin,' . $admin->getKey() . ',id_admin',
             'password_admin' => 'nullable|string|min:6|confirmed',
+        ], [
+            'nama_admin.required' => 'Nama lengkap wajib diisi',
+            'nama_admin.max' => 'Nama lengkap maksimal 50 karakter',
+            'username_admin.required' => 'Username wajib diisi',
+            'username_admin.unique' => 'Username sudah digunakan',
+            'username_admin.max' => 'Username maksimal 20 karakter',
+            'password_admin.min' => 'Password minimal 6 karakter',
+            'password_admin.confirmed' => 'Konfirmasi password tidak cocok',
         ]);
 
         $admin->nama_admin = $request->nama_admin;
@@ -33,6 +43,6 @@ class PengaturanController extends Controller
 
         $admin->save();
 
-        return back()->with('success', 'Profil berhasil diperbarui');
+        return back()->with('success', 'Profil berhasil diperbarui!');
     }
 }

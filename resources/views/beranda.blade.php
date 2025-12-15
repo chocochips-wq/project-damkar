@@ -6,13 +6,18 @@
     <div>
         <h1 class="text-2xl font-bold text-gray-900">Beranda</h1>
         <p class="text-sm text-gray-600">
-            Ringkasan data 
+            Ringkasan data
         </p>
     </div>
 @endsection
 
 @section('content')
     <div class="space-y-8">
+
+        <!-- Search Bar -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            @include('components.search', ['placeholder' => 'Cari dokumen atau folder...'])
+        </div>
 
         {{-- STAT BOX --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
