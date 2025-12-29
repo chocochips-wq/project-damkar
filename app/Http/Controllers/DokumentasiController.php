@@ -26,47 +26,54 @@ class DokumentasiController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'nama_kegiatan' => 'required|string|max:255',
-            'keterangan' => 'required|string',
-            'tanggal_kegiatan' => 'required|date',
-            'thumbnail' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
+{
+    $request->validate([
+        'nama_kegiatan' => 'required|string|max:255',
+        'keterangan' => 'required|string',
+        'tanggal_kegiatan' => 'required|date',
+        'thumbnail' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+    ]);
 
-        $thumbnailPath = null;
-        if ($request->hasFile('thumbnail')) {
-            $thumbnailPath = $request->file('thumbnail')->store('dokumentasi', 'public');
-        }
-
-        Dokumentasi::create([
-            'id_kegiatan' => substr(uniqid(), 0, 10),
-            'nama_kegiatan' => $request->nama_kegiatan,
-            'keterangan' => $request->keterangan,
-            'tanggal_kegiatan' => $request->tanggal_kegiatan,
-            'thumbnail' => $thumbnailPath,
-            'ekstensi' => $request->file('thumbnail')->getClientOriginalExtension(),
-            'created' => now(),
-        ]);
-
-        return redirect()->route('dokumentasi')->with('success', 'Dokumentasi berhasil ditambahkan!');
+    $thumbnailPath = null;
+    if ($request->hasFile('thumbnail')) {
+        // Simpan ke storage/app/public/dokumentasi
+        $file = $request->file('thumbnail');
+        $filename = time() . '_' . $file->getClientOriginalName();
+        $thumbnailPath = $file->storeAs('dokumentasi', $filename, 'public');
+        // Hasil: "dokumentasi/timestamp_filename.jpg"
     }
+
+    Dokumentasi::create([
+        'id_kegiatan' => substr(uniqid(), 0, 10),
+        'nama_kegiatan' => $request->nama_kegiatan,
+        'keterangan' => $request->keterangan,
+        'tanggal_kegiatan' => $request->tanggal_kegiatan,
+        'thumbnail' => $thumbnailPath, // Simpan path relatif
+        'ekstensi' => $request->file('thumbnail')->getClientOriginalExtension(),
+        'created' => now(),
+    ]);
+
+    return redirect()->route('dokumentasi')->with('success', 'Dokumentasi berhasil ditambahkan!');
+}
 
     public function show($id)
-    {
-        $dokumentasi = Dokumentasi::with('files')->findOrFail($id);
-        return view('dokumentasi.show', compact('dokumentasi'));
-    }
+{
+    $dokumentasi = Dokumentasi::with('files')
+        ->where('id_kegiatan', $id)
+        ->firstOrFail();
+
+    return view('dokumentasi.show', compact('dokumentasi'));
+}
 
     public function edit($id)
     {
-        $dokumentasi = Dokumentasi::findOrFail($id);
+        $dokumentasi = Dokumentasi::where('id_kegiatan', $id)->firstOrFail();
         return view('dokumentasi.edit', compact('dokumentasi'));
     }
 
     public function update(Request $request, $id)
     {
-        $dokumentasi = Dokumentasi::findOrFail($id);
+        $dokumentasi = Dokumentasi::where('id_kegiatan', $id)->firstOrFail();
 
         $request->validate([
             'nama_kegiatan' => 'required|string|max:255',
@@ -97,7 +104,7 @@ class DokumentasiController extends Controller
 
     public function destroy($id)
     {
-        $dokumentasi = Dokumentasi::findOrFail($id);
+        $dokumentasi = Dokumentasi::where('id_kegiatan', $id)->firstOrFail();
 
         // Delete thumbnail
         if ($dokumentasi->thumbnail && Storage::disk('public')->exists($dokumentasi->thumbnail)) {

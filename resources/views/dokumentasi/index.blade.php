@@ -44,21 +44,25 @@
                     <div class="group bg-white border border-gray-200 rounded-xl overflow-hidden shadow hover:shadow-xl transition-all duration-300">
 
                         <!-- Thumbnail -->
-                        <div class="relative h-64 overflow-hidden">
-                            <img
-                                src="{{ $item->thumbnail }}"
-                                alt="{{ $item->nama_kegiatan }}"
-                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                            />
+                            <div class="relative h-64 overflow-hidden">
+                                <a href="{{ route('dokumentasi.show', $item->id_kegiatan) }}"
+                                class="block w-full h-full">
+                                    <img
+                                        src="{{ $item->thumbnail }}"
+                                        alt="{{ $item->nama_kegiatan }}"
+                                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                        onerror="this.onerror=null; this.src='{{ asset('images/logo-damkar.png') }}';"
+                                        loading="lazy"
+                                    />
 
-                            <!-- Overlay -->
-                            <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                                <span class="text-white text-sm font-medium">
-                                    Lihat Detail
-                                </span>
+                        <!-- Overlay -->
+                                    <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                        <span class="text-white text-sm font-medium">
+                                            Lihat Detail
+                                        </span>
+                                    </div>
+                                </a>
                             </div>
-                        </div>
-
                         <!-- Content -->
                         <div class="p-4 space-y-2">
                             <h4 class="font-semibold text-gray-900 line-clamp-2">
