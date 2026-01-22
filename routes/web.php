@@ -33,6 +33,9 @@ Route::middleware('admin.auth')->group(function () {
 
     // Monitoring
     Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring');
+    Route::post('/monitoring/folder/create', [MonitoringController::class, 'createFolder'])->name('monitoring.folder.create');
+    Route::post('/monitoring/file/upload', [MonitoringController::class, 'uploadFile'])->name('monitoring.file.upload');
+    Route::post('/monitoring/folder/upload', [MonitoringController::class, 'uploadFolder'])->name('monitoring.folder.upload');
     Route::post('/monitoring/folder/{id}/rename', [MonitoringController::class, 'renameFolder'])->name('monitoring.folder.rename');
     Route::delete('/monitoring/folder/{id}', [MonitoringController::class, 'deleteFolder'])->name('monitoring.folder.delete');
     Route::post('/monitoring/file/{id}/rename', [MonitoringController::class, 'renameFile'])->name('monitoring.file.rename');
