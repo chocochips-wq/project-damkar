@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title') - PEP DAMKAR</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -37,6 +38,9 @@
 
     {{-- SCRIPT HALAMAN (WAJIB ADA) --}}
     @yield('scripts')
+
+    {{-- Universal context menu component (reads window.ContextMenuConfig) --}}
+    @include('components.context-menu')
 
 </body>
 </html>

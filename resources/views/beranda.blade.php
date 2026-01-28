@@ -230,48 +230,58 @@
     <script>
         const ctx = document.getElementById('chartDokumen');
 
+        // Chart data is placed in a JSON script tag to avoid Blade tokens inside JS source
+        // and to keep editors/language servers from mis-parsing Blade directives.
+        </script>
+    <script id="chart-data" type="application/json">
+        {!! json_encode([
+            'labels' => $allYears,
+            'datasets' => [
+                [
+                    'label' => 'Perencanaan',
+                    'data' => $normalizedPerencanaan,
+                    'backgroundColor' => '#7c3aed',
+                    'borderColor' => '#7c3aed',
+                    'borderWidth' => 1,
+                ],
+                [
+                    'label' => 'Monitoring',
+                    'data' => $normalizedMonitoring,
+                    'backgroundColor' => '#2563eb',
+                    'borderColor' => '#2563eb',
+                    'borderWidth' => 1,
+                ],
+                [
+                    'label' => 'Mekanisme',
+                    'data' => $normalizedMekanisme,
+                    'backgroundColor' => '#16a34a',
+                    'borderColor' => '#16a34a',
+                    'borderWidth' => 1,
+                ],
+                [
+                    'label' => 'Dokumentasi',
+                    'data' => $normalizedDokumentasi,
+                    'backgroundColor' => '#ea580c',
+                    'borderColor' => '#ea580c',
+                    'borderWidth' => 1,
+                ],
+                [
+                    'label' => 'Dasar Hukum',
+                    'data' => $normalizedDasarHukum,
+                    'backgroundColor' => '#dc2626',
+                    'borderColor' => '#dc2626',
+                    'borderWidth' => 1,
+                ],
+            ],
+        ]) !!}
+    </script>
+    <script>
+        const cfgEl = document.getElementById('chart-data');
+        const chartData = cfgEl ? JSON.parse(cfgEl.textContent) : { labels: [], datasets: [] };
+
         new Chart(ctx, {
             type: 'bar',
-            data: {
-                labels: {!! json_encode($allYears) !!},
-                datasets: [
-                    {
-                        label: 'Perencanaan',
-                        data: {!! json_encode($normalizedPerencanaan) !!},
-                        backgroundColor: '#7c3aed',
-                        borderColor: '#7c3aed',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Monitoring',
-                        data: {!! json_encode($normalizedMonitoring) !!},
-                        backgroundColor: '#2563eb',
-                        borderColor: '#2563eb',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Mekanisme',
-                        data: {!! json_encode($normalizedMekanisme) !!},
-                        backgroundColor: '#16a34a',
-                        borderColor: '#16a34a',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Dokumentasi',
-                        data: {!! json_encode($normalizedDokumentasi) !!},
-                        backgroundColor: '#ea580c',
-                        borderColor: '#ea580c',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Dasar Hukum',
-                        data: {!! json_encode($normalizedDasarHukum) !!},
-                        backgroundColor: '#dc2626',
-                        borderColor: '#dc2626',
-                        borderWidth: 1
-                    }
-                ]
-            },
+            data: chartData,
             options: {
                 responsive: true,
                 maintainAspectRatio: false,

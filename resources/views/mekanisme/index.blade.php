@@ -9,6 +9,27 @@
     </div>
 @endsection
 
+@section('scripts')
+    {{-- context menu config as JSON to avoid embedding Blade tokens inside JS source (helps editors/linters) --}}
+    <script id="context-menu-config" type="application/json">
+        {!! json_encode([
+            'createUrl' => Route::has('mekanisme.folder.create') ? route('mekanisme.folder.create') : '',
+            'fileUploadUrl' => Route::has('mekanisme.file.upload') ? route('mekanisme.file.upload') : '',
+            'folderUploadUrl' => Route::has('mekanisme.folder.upload') ? route('mekanisme.folder.upload') : '',
+            'currentFolder' => request('folder'),
+            'allowedSelector' => '.space-y-6'
+        ]) !!}
+    </script>
+    <script>
+        try {
+            const cfgEl = document.getElementById('context-menu-config');
+            window.ContextMenuConfig = cfgEl ? JSON.parse(cfgEl.textContent) : {};
+        } catch (e) {
+            window.ContextMenuConfig = {};
+        }
+    </script>
+@endsection
+
 @section('content')
     <div class="space-y-6">
 
@@ -95,7 +116,10 @@
                                             </svg>
                                             Rename
                                         </button>
-                                        <button onclick="deleteFolder('{{ $folder->id_folder_mek }}', '{{ addslashes($folder->nama_folder_mek) }}')" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+                                        <button class="btn-delete-folder w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                data-id="{{ $folder->id_folder_mek }}"
+                                                data-name="{{ $folder->nama_folder_mek }}"
+                                                data-url="{{ route('mekanisme.folder.delete', $folder->id_folder_mek) }}">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                             </svg>
@@ -179,7 +203,10 @@
                                             </svg>
                                             Rename
                                         </button>
-                                        <button onclick="deleteFile('{{ $file->id_mekanisme }}', '{{ addslashes($file->nama_file) }}')" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+                                        <button class="btn-delete-file w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                data-id="{{ $file->id_mekanisme }}"
+                                                data-name="{{ $file->nama_file }}"
+                                                data-url="{{ route('mekanisme.file.delete', $file->id_mekanisme) }}">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                             </svg>
@@ -268,11 +295,12 @@
             }
         }
 
-        // Delete Folder
-        async function deleteFolder(id, name) {
+        // Delete Folder (accepts optional url parameter from onclick)
+        async function deleteFolder(id, name, url) {
             if (confirm(`Apakah Anda yakin ingin menghapus folder "${name}"?`)) {
                 try {
-                    const response = await fetch(`/mekanisme/folder/${id}`, {
+                    const endpoint = url || `/mekanisme/folder/${id}`;
+                    const response = await fetch(endpoint, {
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
@@ -319,11 +347,12 @@
             }
         }
 
-        // Delete File
-        async function deleteFile(id, name) {
+        // Delete File (accepts optional url parameter from onclick)
+        async function deleteFile(id, name, url) {
             if (confirm(`Apakah Anda yakin ingin menghapus file "${name}"?`)) {
                 try {
-                    const response = await fetch(`/perencanaan/file/${id}`, {
+                    const endpoint = url || `/mekanisme/file/${id}`;
+                    const response = await fetch(endpoint, {
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
@@ -342,5 +371,24 @@
                 }
             }
         }
+
+        // Delegate delete button clicks (uses data-* attributes to avoid inline JS with Blade)
+        document.addEventListener('click', function (e) {
+            const btnFile = e.target.closest('.btn-delete-file');
+            if (btnFile) {
+                e.preventDefault();
+                e.stopPropagation();
+                deleteFile(btnFile.dataset.id, btnFile.dataset.name, btnFile.dataset.url);
+                return;
+            }
+
+            const btnFolder = e.target.closest('.btn-delete-folder');
+            if (btnFolder) {
+                e.preventDefault();
+                e.stopPropagation();
+                deleteFolder(btnFolder.dataset.id, btnFolder.dataset.name, btnFolder.dataset.url);
+                return;
+            }
+        });
     </script>
 @endsection

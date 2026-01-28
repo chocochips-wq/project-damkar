@@ -95,7 +95,10 @@
                                             </svg>
                                             Rename
                                         </button>
-                                        <button onclick="deleteFolder('{{ $folder->id_folder_mon }}', '{{ addslashes($folder->nama_folder_mon) }}')" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+                                        <button class="btn-delete-folder w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                data-id="{{ $folder->id_folder_mon }}"
+                                                data-name="{{ $folder->nama_folder_mon }}"
+                                                data-url="{{ route('monitoring.folder.delete', $folder->id_folder_mon) }}">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                             </svg>
@@ -179,7 +182,10 @@
                                             </svg>
                                             Rename
                                         </button>
-                                        <button onclick="deleteFile('{{ $file->id_monitoring }}', '{{ addslashes($file->nama_file) }}')" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+                                        <button class="btn-delete-file w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                data-id="{{ $file->id_monitoring }}"
+                                                data-name="{{ $file->nama_file }}"
+                                                data-url="{{ route('monitoring.file.delete', $file->id_monitoring) }}">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                             </svg>
@@ -218,265 +224,60 @@
         </div>
     </div>
 
-    <!-- Context Menu (Google Drive Style) -->
-    <div id="contextMenu" class="hidden fixed bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-50 min-w-[220px]">
-        <button onclick="openCreateFolder()" class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 flex items-center gap-3 transition group">
-            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition">
-                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                </svg>
-            </div>
-            <span class="font-medium">New Folder</span>
-        </button>
-        
-        <div class="border-t border-gray-200 my-1"></div>
-        
-        <button onclick="document.getElementById('fileInput').click()" class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-green-50 flex items-center gap-3 transition group">
-            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition">
-                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                </svg>
-            </div>
-            <span class="font-medium">File Upload</span>
-        </button>
-        
-        <button onclick="document.getElementById('folderInput').click()" class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-purple-50 flex items-center gap-3 transition group">
-            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition">
-                <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
-                </svg>
-            </div>
-            <span class="font-medium">Folder Upload</span>
-        </button>
-    </div>
+@endsection
 
-    <!-- Hidden File Inputs -->
-    <input type="file" id="fileInput" multiple class="hidden" onchange="handleFileUpload(event)">
-    <input type="file" id="folderInput" webkitdirectory directory multiple class="hidden" onchange="handleFolderUpload(event)">
-
-    <!-- Modal Create Folder -->
-    <div id="modalCreateFolder" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all">
-            <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4 rounded-t-2xl">
-                <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                    </svg>
-                    New Folder
-                </h3>
-            </div>
-            <form id="formCreateFolder" class="p-6">
-                <input 
-                    type="text" 
-                    id="folderNameInput"
-                    name="nama_folder" 
-                    required 
-                    maxlength="255"
-                    placeholder="Untitled folder"
-                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                >
-                <div class="flex gap-3 mt-6">
-                    <button 
-                        type="button" 
-                        onclick="closeModal('modalCreateFolder')" 
-                        class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
-                    >
-                        Cancel
-                    </button>
-                    <button 
-                        type="submit" 
-                        class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg"
-                    >
-                        Create
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Upload Progress Modal -->
-    <div id="uploadProgress" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <h3 class="text-lg font-bold text-gray-900 mb-4">Uploading...</h3>
-            <div class="space-y-3">
-                <div class="flex items-center gap-3">
-                    <div class="animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
-                    <span id="uploadStatus" class="text-sm text-gray-600">Processing files...</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                    <div id="uploadProgressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
+@section('scripts')
+    {{-- context menu config as JSON to avoid embedding Blade tokens inside JS source (helps editors/linters) --}}
+    <script id="context-menu-config" type="application/json">
+        {!! json_encode([
+            'createUrl' => Route::has('monitoring.folder.create') ? route('monitoring.folder.create') : '',
+            'fileUploadUrl' => Route::has('monitoring.file.upload') ? route('monitoring.file.upload') : '',
+            'folderUploadUrl' => Route::has('monitoring.folder.upload') ? route('monitoring.folder.upload') : '',
+            'currentFolder' => request('folder'),
+            'allowedSelector' => '.space-y-6'
+        ]) !!}
+    </script>
     <script>
-        // Toggle Dropdown
-        function toggleDropdown(id) {
-            const dropdown = document.getElementById(id);
-            const allDropdowns = document.querySelectorAll('[id^="folder-"], [id^="file-"]');
-
-            allDropdowns.forEach(d => {
-                if (d.id !== id) d.classList.add('hidden');
-            });
-
-            dropdown.classList.toggle('hidden');
+        try {
+            const cfgEl = document.getElementById('context-menu-config');
+            window.ContextMenuConfig = cfgEl ? JSON.parse(cfgEl.textContent) : {};
+        } catch (e) {
+            window.ContextMenuConfig = {};
         }
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(event) {
-            if (!event.target.closest('button')) {
-                document.querySelectorAll('[id^="folder-"], [id^="file-"]').forEach(d => {
-                    d.classList.add('hidden');
-                });
-            }
-        });
-
-        // Context Menu
-        document.addEventListener('contextmenu', function(e) {
-            const isValidArea = e.target.closest('.space-y-6') || 
-                               e.target.closest('.bg-white') || 
-                               e.target.classList.contains('bg-gray-50');
-            
-            if (isValidArea && !e.target.closest('a') && !e.target.closest('button')) {
+    </script>
+    <script>
+        // Delegate delete button clicks to shared handlers (if present)
+        document.addEventListener('click', function (e) {
+            const btnFile = e.target.closest('.btn-delete-file');
+            if (btnFile) {
                 e.preventDefault();
-                const menu = document.getElementById('contextMenu');
-                menu.style.left = e.pageX + 'px';
-                menu.style.top = e.pageY + 'px';
-                menu.classList.remove('hidden');
-            }
-        });
-
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('#contextMenu')) {
-                document.getElementById('contextMenu').classList.add('hidden');
-            }
-        });
-
-        // Create Folder
-        function openCreateFolder() {
-            document.getElementById('contextMenu').classList.add('hidden');
-            document.getElementById('modalCreateFolder').classList.remove('hidden');
-            setTimeout(() => {
-                document.getElementById('folderNameInput').focus();
-                document.getElementById('folderNameInput').select();
-            }, 100);
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.add('hidden');
-        }
-
-        document.getElementById('formCreateFolder').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(e.target);
-            const currentFolder = '{{ request("folder") }}';
-
-            try {
-                const response = await fetch('{{ route("monitoring.folder.create") }}', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        nama_folder: formData.get('nama_folder'),
-                        id_parent: currentFolder || null
-                    })
-                });
-
-                const data = await response.json();
-                
-                if (data.success) {
-                    closeModal('modalCreateFolder');
-                    location.reload();
+                e.stopPropagation();
+                if (typeof deleteFile === 'function') {
+                    deleteFile(btnFile.dataset.id, btnFile.dataset.name, btnFile.dataset.url);
                 } else {
-                    alert(data.message);
+                    // fallback: send DELETE
+                    if (confirm(`Apakah Anda yakin ingin menghapus file "${btnFile.dataset.name}"?`)) {
+                        fetch(btnFile.dataset.url, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } })
+                            .then(r => r.json()).then(d => { alert(d.message); if (d.success) location.reload(); }).catch(()=> alert('Terjadi kesalahan'));
+                    }
                 }
-            } catch (error) {
-                alert('Terjadi kesalahan');
+                return;
+            }
+
+            const btnFolder = e.target.closest('.btn-delete-folder');
+            if (btnFolder) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof deleteFolder === 'function') {
+                    deleteFolder(btnFolder.dataset.id, btnFolder.dataset.name, btnFolder.dataset.url);
+                } else {
+                    if (confirm(`Apakah Anda yakin ingin menghapus folder "${btnFolder.dataset.name}"?`)) {
+                        fetch(btnFolder.dataset.url, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } })
+                            .then(r => r.json()).then(d => { alert(d.message); if (d.success) location.reload(); }).catch(()=> alert('Terjadi kesalahan'));
+                    }
+                }
+                return;
             }
         });
-
-        // File Upload
-        async function handleFileUpload(event) {
-            const files = event.target.files;
-            if (files.length === 0) return;
-
-            document.getElementById('contextMenu').classList.add('hidden');
-            document.getElementById('uploadProgress').classList.remove('hidden');
-            document.getElementById('uploadStatus').textContent = `Uploading ${files.length} file(s)...`;
-
-            const currentFolder = '{{ request("folder") }}';
-
-            for (let i = 0; i < files.length; i++) {
-                const formData = new FormData();
-                formData.append('file', files[i]);
-                formData.append('id_folder', currentFolder || '');
-
-                try {
-                    await fetch('{{ route("monitoring.file.upload") }}', {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: formData
-                    });
-
-                    const progress = ((i + 1) / files.length) * 100;
-                    document.getElementById('uploadProgressBar').style.width = progress + '%';
-                    document.getElementById('uploadStatus').textContent = `Uploading ${i + 1}/${files.length}...`;
-
-                } catch (error) {
-                    console.error('Upload error:', error);
-                }
-            }
-
-            setTimeout(() => {
-                document.getElementById('uploadProgress').classList.add('hidden');
-                location.reload();
-            }, 500);
-        }
-
-        // Folder Upload
-        async function handleFolderUpload(event) {
-            const files = event.target.files;
-            if (files.length === 0) return;
-
-            document.getElementById('contextMenu').classList.add('hidden');
-            document.getElementById('uploadProgress').classList.remove('hidden');
-            document.getElementById('uploadStatus').textContent = `Uploading ${files.length} file(s)...`;
-
-            const currentFolder = '{{ request("folder") }}';
-
-            for (let i = 0; i < files.length; i++) {
-                const formData = new FormData();
-                formData.append('file', files[i]);
-                formData.append('id_folder', currentFolder || '');
-
-                try {
-                    await fetch('{{ route("monitoring.folder.upload") }}', {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: formData
-                    });
-
-                    const progress = ((i + 1) / files.length) * 100;
-                    document.getElementById('uploadProgressBar').style.width = progress + '%';
-                    document.getElementById('uploadStatus').textContent = `Uploading ${i + 1}/${files.length}...`;
-
-                } catch (error) {
-                    console.error('Upload error:', error);
-                }
-            }
-
-            setTimeout(() => {
-                document.getElementById('uploadProgress').classList.add('hidden');
-                location.reload();
-            }, 500);
-        }
     </script>
 @endsection
