@@ -42,5 +42,11 @@
     {{-- Universal context menu component (reads window.ContextMenuConfig) --}}
     @include('components.context-menu')
 
+    {{-- Modal Components untuk Sidebar New Menu --}}
+    @include('components.modals')
+
+    {{-- App Scripts --}}
+    <script src="{{ asset('js/app.js') }}"></script>
+
 </body>
 </html>

@@ -27,17 +27,42 @@
         <div id="newMenu"
              class="hidden mt-2 bg-white border rounded-lg shadow-lg text-sm">
 
-            <a href="#" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100">
-                📁 Folder baru
-            </a>
-
-            <a href="#" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100">
-                📄 Upload file
-            </a>
-
-            <a href="#" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100">
-                📂 Upload folder
-            </a>
+            {{-- Folder Baru --}}
+            @if (request()->routeIs('perencanaan') || request()->routeIs('perencanaan*'))
+                <button onclick="openCreateFolderModal()" class="w-full text-left flex items-center gap-2 px-4 py-2 hover:bg-gray-100">
+                    📁 Folder baru
+                </button>
+                <button onclick="openUploadFileModal()" class="w-full text-left flex items-center gap-2 px-4 py-2 hover:bg-gray-100">
+                    📄 Upload file
+                </button>
+                <button onclick="openUploadFolderModal()" class="w-full text-left flex items-center gap-2 px-4 py-2 hover:bg-gray-100">
+                    📂 Upload folder
+                </button>
+            @elseif (request()->routeIs('monitoring') || request()->routeIs('monitoring*'))
+                <button onclick="openCreateFolderModal()" class="w-full text-left flex items-center gap-2 px-4 py-2 hover:bg-gray-100">
+                    📁 Folder baru
+                </button>
+                <button onclick="openUploadFileModal()" class="w-full text-left flex items-center gap-2 px-4 py-2 hover:bg-gray-100">
+                    📄 Upload file
+                </button>
+                <button onclick="openUploadFolderModal()" class="w-full text-left flex items-center gap-2 px-4 py-2 hover:bg-gray-100">
+                    📂 Upload folder
+                </button>
+            @elseif (request()->routeIs('mekanisme') || request()->routeIs('mekanisme*'))
+                <button onclick="openCreateFolderModal()" class="w-full text-left flex items-center gap-2 px-4 py-2 hover:bg-gray-100">
+                    📁 Folder baru
+                </button>
+                <button onclick="openUploadFileModal()" class="w-full text-left flex items-center gap-2 px-4 py-2 hover:bg-gray-100">
+                    📄 Upload file
+                </button>
+                <button onclick="openUploadFolderModal()" class="w-full text-left flex items-center gap-2 px-4 py-2 hover:bg-gray-100">
+                    📂 Upload folder
+                </button>
+            @else
+                <div class="px-4 py-3 text-xs text-gray-500">
+                    Pilih menu untuk membuat folder atau upload file
+                </div>
+            @endif
         </div>
     </div>
 

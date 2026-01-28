@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\FolderPerencanaan;
 use App\Models\Perencanaan;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class PerencanaanController extends Controller
 {
@@ -34,6 +36,232 @@ class PerencanaanController extends Controller
         return view('perencanaan.index', compact('folders', 'files', 'currentFolder', 'breadcrumbs', 'search'));
     }
 
+    public function createFolder(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'nama_folder' => 'required|string|max:255',
+                'id_parent' => 'nullable|string'
+            ]);
+
+            // Generate folder ID dengan format FLRPR + 5 digit
+            $lastFolder = FolderPerencanaan::orderBy('id_folder_per', 'desc')->first();
+            $nextNumber = 1;
+            if ($lastFolder) {
+                $lastId = $lastFolder->id_folder_per;
+                // Extract number from FLRPR00001 format
+                if (preg_match('/FLRPR(\d+)/', $lastId, $matches)) {
+                    $nextNumber = intval($matches[1]) + 1;
+                }
+            }
+            $newId = 'FLRPR' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+
+            $folder = new FolderPerencanaan();
+            $folder->id_folder_per = $newId;
+            $folder->id_parent = $request->id_parent;
+            $folder->nama_folder_per = $request->nama_folder;
+            $folder->pemilik = Auth::guard('admin')->user()->nama_admin;
+            $folder->created = now();
+            $folder->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Folder berhasil dibuat'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal: ' . implode(', ', array_merge(...array_values($e->errors())))
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function uploadFile(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'file' => 'required|file|max:51200', // Max 50MB
+                'id_folder' => 'nullable|string'
+            ]);
+
+            $file = $request->file('file');
+            $originalName = $file->getClientOriginalName();
+            $extension = $file->getClientOriginalExtension();
+
+            // Generate unique filename
+            $filename = time() . '_' . uniqid() . '.' . $extension;
+
+            // Store file
+            $path = $file->storeAs('perencanaan', $filename, 'public');
+
+            // Generate file ID dengan format FILEP + 5 digit
+            $lastFile = Perencanaan::orderBy('id_perencanaan', 'desc')->first();
+            $nextNumber = 1;
+            if ($lastFile) {
+                $lastId = $lastFile->id_perencanaan;
+                // Extract number from FILEP00051 format
+                if (preg_match('/FILEP(\d+)/', $lastId, $matches)) {
+                    $nextNumber = intval($matches[1]) + 1;
+                }
+            }
+            $newId = 'FILEP' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+
+            // Generate file ID
+            $newFile = new Perencanaan();
+            $newFile->id_perencanaan = $newId;
+            $newFile->id_folder_per = $request->id_folder ?? null; // Allow null
+            $newFile->nama_file = $originalName;
+            $newFile->file_path = $path;
+            $newFile->link = '/storage/' . $path;
+            $newFile->pemilik = Auth::guard('admin')->user()->nama_admin;
+            $newFile->created = now();
+            $newFile->save();
+
+            \Log::info('File uploaded', ['id' => $newId, 'name' => $originalName, 'folder' => $newFile->id_folder_per]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'File berhasil diupload'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal: ' . implode(', ', array_merge(...array_values($e->errors())))
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Upload file error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal upload file: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function uploadFolder(Request $request)
+    {
+        try {
+            // Flexible validation - paths is optional
+            $validated = $request->validate([
+                'files.*' => 'required|file|max:51200',
+                'paths.*' => 'nullable|string',
+                'id_parent' => 'nullable|string'
+            ]);
+
+            $files = $request->file('files');
+            $paths = $request->input('paths', []);
+            $parentId = $request->input('id_parent');
+
+            \Log::info('Upload folder started', [
+                'file_count' => count($files),
+                'paths_count' => count($paths),
+                'parent_id' => $parentId
+            ]);
+
+            $folderMap = [];
+            $uploadedCount = 0;
+
+            foreach ($files as $index => $file) {
+                $relativePath = $paths[$index] ?? $file->getClientOriginalName();
+                $pathParts = explode('/', $relativePath);
+
+                \Log::info('Processing file', ['path' => $relativePath, 'parts' => count($pathParts)]);
+
+                // Handle folder structure
+                $currentParentId = $parentId;
+
+                // Create folders if needed (except last part which is filename)
+                for ($i = 0; $i < count($pathParts) - 1; $i++) {
+                    $folderName = $pathParts[$i];
+                    $folderKey = $currentParentId . '/' . $folderName;
+
+                    if (!isset($folderMap[$folderKey])) {
+                        // Generate folder ID dengan format FLRPR + 5 digit
+                        $lastFolder = FolderPerencanaan::orderBy('id_folder_per', 'desc')->first();
+                        $nextNumber = 1;
+                        if ($lastFolder) {
+                            $lastId = $lastFolder->id_folder_per;
+                            if (preg_match('/FLRPR(\d+)/', $lastId, $matches)) {
+                                $nextNumber = intval($matches[1]) + 1;
+                            }
+                        }
+                        $newFolderId = 'FLRPR' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+
+                        FolderPerencanaan::create([
+                            'id_folder_per' => $newFolderId,
+                            'id_parent' => $currentParentId,
+                            'nama_folder_per' => $folderName,
+                            'created' => now(),
+                            'pemilik' => Auth::guard('admin')->user()->nama_admin
+                        ]);
+
+                        $folderMap[$folderKey] = $newFolderId;
+                        \Log::info('Folder created', ['id' => $newFolderId, 'name' => $folderName]);
+
+                        // Small delay to ensure unique timestamps
+                        usleep(10000); // 0.01 second
+                    }
+
+                    $currentParentId = $folderMap[$folderKey];
+                }
+
+                // Upload file
+                $originalName = $file->getClientOriginalName();
+                $extension = $file->getClientOriginalExtension();
+                $filename = time() . '_' . uniqid() . '.' . $extension;
+                $storagePath = $file->storeAs('perencanaan', $filename, 'public');
+
+                // Generate file ID dengan format FILEP + 5 digit
+                $lastFile = Perencanaan::orderBy('id_perencanaan', 'desc')->first();
+                $nextNumber = 1;
+                if ($lastFile) {
+                    $lastId = $lastFile->id_perencanaan;
+                    if (preg_match('/FILEP(\d+)/', $lastId, $matches)) {
+                        $nextNumber = intval($matches[1]) + 1;
+                    }
+                }
+                $newFileId = 'FILEP' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+
+                Perencanaan::create([
+                    'id_perencanaan' => $newFileId,
+                    'id_folder_per' => $currentParentId,
+                    'nama_file' => $originalName,
+                    'file_path' => $storagePath,
+                    'link' => '/storage/' . $storagePath,
+                    'created' => now(),
+                    'pemilik' => Auth::guard('admin')->user()->nama_admin
+                ]);
+
+                $uploadedCount++;
+                \Log::info('File uploaded', ['id' => $newFileId, 'name' => $originalName, 'folder' => $currentParentId]);
+                usleep(10000); // 0.01 second delay
+            }
+
+            \Log::info('Upload folder completed', ['uploaded_count' => $uploadedCount]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Berhasil upload {$uploadedCount} file"
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Upload folder validation error', ['errors' => $e->errors()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal: ' . implode(', ', array_merge(...array_values($e->errors())))
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Upload folder error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal upload folder: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function renameFolder(Request $request, $id)
     {
         $request->validate([
@@ -53,7 +281,7 @@ class PerencanaanController extends Controller
     public function deleteFolder($id)
     {
         $folder = FolderPerencanaan::findOrFail($id);
-        
+
         if ($folder->children()->count() > 0 || $folder->files()->count() > 0) {
             return response()->json([
                 'success' => false,
@@ -88,6 +316,12 @@ class PerencanaanController extends Controller
     public function deleteFile($id)
     {
         $file = Perencanaan::findOrFail($id);
+
+        // Delete physical file if exists
+        if ($file->file_path && Storage::disk('public')->exists($file->file_path)) {
+            Storage::disk('public')->delete($file->file_path);
+        }
+
         $file->delete();
 
         return response()->json([
@@ -100,12 +334,12 @@ class PerencanaanController extends Controller
     {
         $breadcrumbs = [];
         $current = $folder;
-        
+
         while ($current) {
             array_unshift($breadcrumbs, $current);
             $current = $current->parent;
         }
-        
+
         return $breadcrumbs;
     }
 }
