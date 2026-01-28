@@ -16,6 +16,7 @@ class Perencanaan extends Model
         'id_perencanaan',
         'id_folder_per',
         'nama_file',
+        'file_path',
         'link',
         'pemilik',
         'created',

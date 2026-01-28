@@ -145,14 +145,30 @@ class PerencanaanController extends Controller
     public function uploadFolder(Request $request)
     {
         try {
-            // Flexible validation - paths is optional
-            $validated = $request->validate([
-                'files.*' => 'required|file|max:51200',
-                'paths.*' => 'nullable|string',
-                'id_parent' => 'nullable|string'
+            // Debug: Log what we actually received
+            \Log::info('Upload request received', [
+                'has_files' => $request->hasFile('files'),
+                'has_files_array' => $request->has('files'),
+                'all_files' => $request->allFiles(),
+                'all_input' => $request->except(['files'])
             ]);
 
+            // Don't validate files* - just check if we have files
             $files = $request->file('files');
+            
+            // If files is not an array, convert it
+            if ($files && !is_array($files)) {
+                $files = [$files];
+            }
+            
+            // Handle case where files might be null or not an array
+            if (!$files || (is_array($files) && count($files) === 0)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada file yang diupload'
+                ], 400);
+            }
+            
             $paths = $request->input('paths', []);
             $parentId = $request->input('id_parent');
 
@@ -282,18 +298,24 @@ class PerencanaanController extends Controller
     {
         $folder = FolderPerencanaan::findOrFail($id);
 
-        if ($folder->children()->count() > 0 || $folder->files()->count() > 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Folder tidak dapat dihapus karena masih memiliki isi'
-            ], 400);
+        // Recursively delete all child folders
+        $this->deleteChildFoldersPeencanaan($folder);
+
+        // Delete all files in this folder
+        $files = Perencanaan::where('id_folder_perencanaan', $folder->id)->get();
+        foreach ($files as $file) {
+            if ($file->file_path) {
+                Storage::disk('public')->delete($file->file_path);
+            }
+            $file->delete();
         }
 
+        // Delete the folder itself
         $folder->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Folder berhasil dihapus'
+            'message' => 'Folder dan isinya berhasil dihapus'
         ]);
     }
 
@@ -341,5 +363,28 @@ class PerencanaanController extends Controller
         }
 
         return $breadcrumbs;
+    }
+
+    private function deleteChildFoldersPeencanaan($folder)
+    {
+        // Get all child folders
+        $children = FolderPerencanaan::where('id_parent', $folder->id)->get();
+        
+        foreach ($children as $child) {
+            // Recursively delete this child's children
+            $this->deleteChildFoldersPeencanaan($child);
+            
+            // Delete all files in this child folder
+            $files = Perencanaan::where('id_folder_perencanaan', $child->id)->get();
+            foreach ($files as $file) {
+                if ($file->file_path) {
+                    Storage::disk('public')->delete($file->file_path);
+                }
+                $file->delete();
+            }
+            
+            // Delete the child folder
+            $child->delete();
+        }
     }
 }

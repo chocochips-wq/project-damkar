@@ -93,6 +93,14 @@ function closeModal(modalId) {
     }
 }
 
+// Toggle Dropdown Function for folder context menu
+function toggleDropdown(dropdownId) {
+    const dropdown = document.getElementById(dropdownId);
+    if (dropdown) {
+        dropdown.classList.toggle('hidden');
+    }
+}
+
 // Submit Create Folder Form
 async function submitCreateFolder(event) {
     event.preventDefault();
@@ -148,8 +156,8 @@ async function submitUploadFile(event) {
     event.preventDefault();
 
     const fileInput = document.getElementById('fileInput');
-    if (!fileInput.files.length) {
-        alert('Pilih file terlebih dahulu');
+    if (!fileInput.files || !fileInput.files.length) {
+        alert('⚠️ Pilih file terlebih dahulu');
         return;
     }
 
@@ -226,22 +234,25 @@ async function submitUploadFolder(event) {
     event.preventDefault();
 
     const folderInput = document.getElementById('folderInput');
-    if (!folderInput.files.length) {
-        alert('Pilih folder terlebih dahulu');
+    if (!folderInput.files || !folderInput.files.length) {
+        alert('⚠️ Pilih folder terlebih dahulu');
         return;
     }
 
     const currentFolder = window.ContextMenuConfig?.currentFolder || null;
     const formData = new FormData();
 
+    console.log('Starting folder upload with', folderInput.files.length, 'files');
+
     // Add all files from folder with their paths
     for (let i = 0; i < folderInput.files.length; i++) {
         const file = folderInput.files[i];
         formData.append('files[]', file);
+        
         // Get the file's webkitRelativePath (folder structure path)
         const path = file.webkitRelativePath || file.name;
         formData.append('paths[]', path);
-        console.log('Uploading:', path);
+        console.log('File', i, ':', path);
     }
 
     if (currentFolder) {
@@ -258,9 +269,12 @@ async function submitUploadFolder(event) {
     progressDiv.classList.remove('hidden');
     uploadBtn.disabled = true;
     cancelBtn.disabled = true;
+    progressBar.style.width = '10%';
+    progressText.textContent = 'Mulai upload...';
 
     try {
         let url = window.ContextMenuConfig?.folderUploadUrl || '/perencanaan/folder/upload';
+        console.log('Uploading to:', url);
 
         const response = await fetch(url, {
             method: 'POST',
@@ -270,35 +284,44 @@ async function submitUploadFolder(event) {
             body: formData
         });
 
-        // Simulate progress
-        progressBar.style.width = '90%';
+        progressBar.style.width = '60%';
         progressText.textContent = 'Memproses...';
 
         // Check if response is ok
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Server Error:', errorText);
+            console.error('Server Error:', response.status, errorText);
             progressDiv.classList.add('hidden');
             uploadBtn.disabled = false;
             cancelBtn.disabled = false;
-            alert('❌ Terjadi kesalahan: ' + response.status + ' ' + response.statusText);
+            
+            // Format error message untuk lebih readable
+            let errorMsg = 'Terjadi kesalahan server: ' + response.status;
+            if (errorText) {
+                errorMsg += '\n\nDetail: ' + errorText.substring(0, 500);
+            }
+            alert('❌ ' + errorMsg);
             return;
         }
 
         const data = await response.json();
+        console.log('Response:', data);
+
         if (data.success) {
             progressBar.style.width = '100%';
             progressText.textContent = '✓ Berhasil!';
             setTimeout(() => {
-                alert('✓ ' + (data.message || 'Folder berhasil diupload'));
+                alert('✅ ' + (data.message || 'Folder berhasil diupload'));
                 closeModal('uploadFolderModal');
+                document.getElementById('folderInput').value = '';
                 location.reload();
             }, 500);
         } else {
             progressDiv.classList.add('hidden');
             uploadBtn.disabled = false;
             cancelBtn.disabled = false;
-            alert('❌ ' + (data.message || 'Terjadi kesalahan'));
+            alert('❌ Error: ' + (data.message || 'Terjadi kesalahan'));
+            console.error('Upload failed:', data);
         }
     } catch (error) {
         console.error('Error:', error);

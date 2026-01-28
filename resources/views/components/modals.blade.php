@@ -66,7 +66,6 @@
                         type="file"
                         id="fileInput"
                         name="fileInput"
-                        required
                         class="hidden"
                         onchange="onFileSelected()">
                     <label for="fileInput" class="cursor-pointer">
@@ -129,7 +128,6 @@
                         type="file"
                         id="folderInput"
                         name="folderInput"
-                        required
                         webkitdirectory
                         directory
                         mozdirectory

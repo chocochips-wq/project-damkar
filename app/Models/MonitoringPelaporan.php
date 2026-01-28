@@ -16,6 +16,7 @@ class MonitoringPelaporan extends Model
         'id_monitoring',
         'id_folder_mon',
         'nama_file',
+        'file_path',
         'link',
         'pemilik',
         'created',

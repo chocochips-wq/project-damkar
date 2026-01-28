@@ -16,6 +16,7 @@ class Mekanisme extends Model
         'id_mekanisme',
         'id_folder_mek',
         'nama_file',
+        'file_path',
         'link',
         'pemilik',
         'created',

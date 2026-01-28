@@ -300,41 +300,7 @@
         setTimeout(() => { document.getElementById('uploadProgress').classList.add('hidden'); location.reload(); }, 500);
     }
 
-    // Folder upload handler
-    async function handleFolderUpload(event) {
-        const cfg = getCtxConfig();
-        const uploadUrl = cfg.folderUploadUrl;
-        const currentFolder = cfg.currentFolder || '';
-        const files = event.target.files;
-        if (!uploadUrl) { alert('Folder upload belum dikonfigurasi untuk halaman ini.'); return; }
-        if (!files || files.length === 0) return;
 
-        document.getElementById('contextMenu').classList.add('hidden');
-        document.getElementById('uploadProgress').classList.remove('hidden');
-        document.getElementById('uploadStatus').textContent = `Uploading ${files.length} file(s)...`;
-
-        for (let i = 0; i < files.length; i++) {
-            const formData = new FormData();
-            formData.append('file', files[i]);
-            formData.append('id_folder', currentFolder || '');
-
-            try {
-                await fetch(uploadUrl, {
-                    method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': getCsrfToken() },
-                    body: formData
-                });
-
-                const progress = ((i + 1) / files.length) * 100;
-                document.getElementById('uploadProgressBar').style.width = progress + '%';
-                document.getElementById('uploadStatus').textContent = `Uploading ${i + 1}/${files.length}...`;
-            } catch (err) {
-                console.error('Upload error:', err);
-            }
-        }
-
-        setTimeout(() => { document.getElementById('uploadProgress').classList.add('hidden'); location.reload(); }, 500);
-    }
 
     // Wire up context menu buttons to hidden inputs (once the DOM is ready)
     document.addEventListener('DOMContentLoaded', function() {

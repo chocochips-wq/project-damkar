@@ -38,37 +38,57 @@ class MekanismeController extends Controller
 
     public function createFolder(Request $request)
     {
-        $request->validate([
-            'nama_folder' => 'required|string|max:255',
-            'id_parent' => 'nullable|string'
-        ]);
+        try {
+            $validated = $request->validate([
+                'nama_folder' => 'required|string|max:255',
+                'id_parent' => 'nullable|string'
+            ]);
 
-        $lastFolder = FolderMekanisme::orderBy('id_folder_mek', 'desc')->first();
-        $lastNumber = $lastFolder ? intval(substr($lastFolder->id_folder_mek, 5)) : 0;
-        $newId = 'FLMEK' . str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
+            // Generate folder ID dengan format FLMEK + 5 digit
+            $lastFolder = FolderMekanisme::orderBy('id_folder_mek', 'desc')->first();
+            $nextNumber = 1;
+            if ($lastFolder) {
+                $lastId = $lastFolder->id_folder_mek;
+                // Extract number from FLMEK00001 format
+                if (preg_match('/FLMEK(\d+)/', $lastId, $matches)) {
+                    $nextNumber = intval($matches[1]) + 1;
+                }
+            }
+            $newId = 'FLMEK' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
 
-        FolderMekanisme::create([
-            'id_folder_mek' => $newId,
-            'id_parent' => $request->id_parent,
-            'nama_folder_mek' => $request->nama_folder,
-            'created' => now(),
-            'pemilik' => Auth::guard('admin')->user()->nama_admin
-        ]);
+            $folder = new FolderMekanisme();
+            $folder->id_folder_mek = $newId;
+            $folder->id_parent = $request->id_parent;
+            $folder->nama_folder_mek = $request->nama_folder;
+            $folder->pemilik = Auth::guard('admin')->user()->nama_admin;
+            $folder->created = now();
+            $folder->save();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Folder berhasil dibuat'
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Folder berhasil dibuat'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal: ' . implode(', ', array_merge(...array_values($e->errors())))
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function uploadFile(Request $request)
     {
-        $request->validate([
-            'file' => 'required|file|max:51200', // Max 50MB
-            'id_folder' => 'nullable|string'
-        ]);
-
         try {
+            $validated = $request->validate([
+                'file' => 'required|file|max:51200', // Max 50MB
+                'id_folder' => 'nullable|string'
+            ]);
+
             $file = $request->file('file');
             $originalName = $file->getClientOriginalName();
             $extension = $file->getClientOriginalExtension();
@@ -79,26 +99,42 @@ class MekanismeController extends Controller
             // Store file
             $path = $file->storeAs('mekanisme', $filename, 'public');
 
-            // Generate file ID
+            // Generate file ID dengan format FILMK + 5 digit
             $lastFile = Mekanisme::orderBy('id_mekanisme', 'desc')->first();
-            $lastNumber = $lastFile ? intval(substr($lastFile->id_mekanisme, 5)) : 0;
-            $newId = 'FILMK' . str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
+            $nextNumber = 1;
+            if ($lastFile) {
+                $lastId = $lastFile->id_mekanisme;
+                // Extract number from FILMK00001 format
+                if (preg_match('/FILMK(\d+)/', $lastId, $matches)) {
+                    $nextNumber = intval($matches[1]) + 1;
+                }
+            }
+            $newId = 'FILMK' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
 
-            // Save to database
-            Mekanisme::create([
-                'id_mekanisme' => $newId,
-                'id_folder_mek' => $request->id_folder,
-                'nama_file' => $originalName,
-                'link' => '/storage/' . $path,
-                'created' => now(),
-                'pemilik' => Auth::guard('admin')->user()->nama_admin
-            ]);
+            // Generate file ID
+            $newFile = new Mekanisme();
+            $newFile->id_mekanisme = $newId;
+            $newFile->id_folder_mek = $request->id_folder ?? null; // Allow null
+            $newFile->nama_file = $originalName;
+            $newFile->file_path = $path;
+            $newFile->link = '/storage/' . $path;
+            $newFile->pemilik = Auth::guard('admin')->user()->nama_admin;
+            $newFile->created = now();
+            $newFile->save();
+
+            \Log::info('File uploaded', ['id' => $newId, 'name' => $originalName, 'folder' => $newFile->id_folder_mek]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'File berhasil diupload'
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal: ' . implode(', ', array_merge(...array_values($e->errors())))
+            ], 422);
         } catch (\Exception $e) {
+            \Log::error('Upload file error', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal upload file: ' . $e->getMessage()
@@ -108,23 +144,48 @@ class MekanismeController extends Controller
 
     public function uploadFolder(Request $request)
     {
-        $request->validate([
-            'files.*' => 'required|file|max:51200',
-            'paths.*' => 'required|string',
-            'id_parent' => 'nullable|string'
-        ]);
-
         try {
+            // Debug: Log what we actually received
+            \Log::info('Upload request received', [
+                'has_files' => $request->hasFile('files'),
+                'has_files_array' => $request->has('files'),
+                'all_files' => $request->allFiles(),
+                'all_input' => $request->except(['files'])
+            ]);
+
+            // Don't validate files* - just check if we have files
             $files = $request->file('files');
-            $paths = $request->input('paths');
+            
+            // If files is not an array, convert it
+            if ($files && !is_array($files)) {
+                $files = [$files];
+            }
+            
+            // Handle case where files might be null or not an array
+            if (!$files || (is_array($files) && count($files) === 0)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada file yang diupload'
+                ], 400);
+            }
+            
+            $paths = $request->input('paths', []);
             $parentId = $request->input('id_parent');
+
+            \Log::info('Upload folder started', [
+                'file_count' => count($files),
+                'paths_count' => count($paths),
+                'parent_id' => $parentId
+            ]);
 
             $folderMap = [];
             $uploadedCount = 0;
 
             foreach ($files as $index => $file) {
-                $relativePath = $paths[$index];
+                $relativePath = $paths[$index] ?? $file->getClientOriginalName();
                 $pathParts = explode('/', $relativePath);
+
+                \Log::info('Processing file', ['path' => $relativePath, 'parts' => count($pathParts)]);
 
                 // Handle folder structure
                 $currentParentId = $parentId;
@@ -135,10 +196,16 @@ class MekanismeController extends Controller
                     $folderKey = $currentParentId . '/' . $folderName;
 
                     if (!isset($folderMap[$folderKey])) {
-                        // Create new folder
+                        // Generate folder ID dengan format FLMEK + 5 digit
                         $lastFolder = FolderMekanisme::orderBy('id_folder_mek', 'desc')->first();
-                        $lastNumber = $lastFolder ? intval(substr($lastFolder->id_folder_mek, 5)) : 0;
-                        $newFolderId = 'FLMEK' . str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
+                        $nextNumber = 1;
+                        if ($lastFolder) {
+                            $lastId = $lastFolder->id_folder_mek;
+                            if (preg_match('/FLMEK(\d+)/', $lastId, $matches)) {
+                                $nextNumber = intval($matches[1]) + 1;
+                            }
+                        }
+                        $newFolderId = 'FLMEK' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
 
                         FolderMekanisme::create([
                             'id_folder_mek' => $newFolderId,
@@ -149,6 +216,10 @@ class MekanismeController extends Controller
                         ]);
 
                         $folderMap[$folderKey] = $newFolderId;
+                        \Log::info('Folder created', ['id' => $newFolderId, 'name' => $folderName]);
+
+                        // Small delay to ensure unique timestamps
+                        usleep(10000); // 0.01 second
                     }
 
                     $currentParentId = $folderMap[$folderKey];
@@ -160,27 +231,46 @@ class MekanismeController extends Controller
                 $filename = time() . '_' . uniqid() . '.' . $extension;
                 $storagePath = $file->storeAs('mekanisme', $filename, 'public');
 
+                // Generate file ID dengan format FILMK + 5 digit
                 $lastFile = Mekanisme::orderBy('id_mekanisme', 'desc')->first();
-                $lastNumber = $lastFile ? intval(substr($lastFile->id_mekanisme, 5)) : 0;
-                $newId = 'FILMK' . str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
+                $nextNumber = 1;
+                if ($lastFile) {
+                    $lastId = $lastFile->id_mekanisme;
+                    if (preg_match('/FILMK(\d+)/', $lastId, $matches)) {
+                        $nextNumber = intval($matches[1]) + 1;
+                    }
+                }
+                $newFileId = 'FILMK' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
 
                 Mekanisme::create([
-                    'id_mekanisme' => $newId,
+                    'id_mekanisme' => $newFileId,
                     'id_folder_mek' => $currentParentId,
                     'nama_file' => $originalName,
+                    'file_path' => $storagePath,
                     'link' => '/storage/' . $storagePath,
                     'created' => now(),
                     'pemilik' => Auth::guard('admin')->user()->nama_admin
                 ]);
 
                 $uploadedCount++;
+                \Log::info('File uploaded', ['id' => $newFileId, 'name' => $originalName, 'folder' => $currentParentId]);
+                usleep(10000); // 0.01 second delay
             }
+
+            \Log::info('Upload folder completed', ['uploaded_count' => $uploadedCount]);
 
             return response()->json([
                 'success' => true,
                 'message' => "Berhasil upload {$uploadedCount} file"
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Upload folder validation error', ['errors' => $e->errors()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal: ' . implode(', ', array_merge(...array_values($e->errors())))
+            ], 422);
         } catch (\Exception $e) {
+            \Log::error('Upload folder error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal upload folder: ' . $e->getMessage()
@@ -208,18 +298,24 @@ class MekanismeController extends Controller
     {
         $folder = FolderMekanisme::findOrFail($id);
 
-        if ($folder->children()->count() > 0 || $folder->files()->count() > 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Folder tidak dapat dihapus karena masih memiliki isi'
-            ], 400);
+        // Recursively delete all child folders
+        $this->deleteChildFoldersMekanisme($folder);
+
+        // Delete all files in this folder
+        $files = Mekanisme::where('id_folder_mekanisme', $folder->id)->get();
+        foreach ($files as $file) {
+            if ($file->file_path) {
+                Storage::disk('public')->delete($file->file_path);
+            }
+            $file->delete();
         }
 
+        // Delete the folder itself
         $folder->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Folder berhasil dihapus'
+            'message' => 'Folder dan isinya berhasil dihapus'
         ]);
     }
 
@@ -243,10 +339,9 @@ class MekanismeController extends Controller
     {
         $file = Mekanisme::findOrFail($id);
 
-        // Delete physical file
-        $filePath = str_replace('/storage/', '', $file->link);
-        if (Storage::disk('public')->exists($filePath)) {
-            Storage::disk('public')->delete($filePath);
+        // Delete physical file if exists
+        if ($file->file_path && Storage::disk('public')->exists($file->file_path)) {
+            Storage::disk('public')->delete($file->file_path);
         }
 
         $file->delete();
@@ -268,5 +363,28 @@ class MekanismeController extends Controller
         }
 
         return $breadcrumbs;
+    }
+
+    private function deleteChildFoldersMekanisme($folder)
+    {
+        // Get all child folders
+        $children = FolderMekanisme::where('id_parent', $folder->id)->get();
+        
+        foreach ($children as $child) {
+            // Recursively delete this child's children
+            $this->deleteChildFoldersMekanisme($child);
+            
+            // Delete all files in this child folder
+            $files = Mekanisme::where('id_folder_mekanisme', $child->id)->get();
+            foreach ($files as $file) {
+                if ($file->file_path) {
+                    Storage::disk('public')->delete($file->file_path);
+                }
+                $file->delete();
+            }
+            
+            // Delete the child folder
+            $child->delete();
+        }
     }
 }
