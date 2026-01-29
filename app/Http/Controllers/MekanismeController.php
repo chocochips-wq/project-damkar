@@ -430,9 +430,27 @@ class MekanismeController extends Controller
                 return redirect($file->link);
             }
             
-            // Jika file lokal
-            if (Storage::disk('public')->exists($file->link)) {
-                return Storage::disk('public')->download($file->link, $file->nama_file);
+            // 1. Cek berdasarkan file_path (biasanya public)
+            if (!empty($file->file_path)) {
+                $path = ltrim($file->file_path, '/');
+                if (Storage::disk('public')->exists($path)) {
+                    return response()->file(Storage::disk('public')->path($path));
+                }
+            }
+
+            // 2. Cek berdasarkan link (Public)
+            if (!empty($file->link)) {
+                $cleanPath = preg_replace('#^/?storage/#', '', $file->link);
+                $cleanPath = ltrim($cleanPath, '/');
+                
+                if (Storage::disk('public')->exists($cleanPath)) {
+                    return response()->file(Storage::disk('public')->path($cleanPath));
+                }
+
+                // 3. Cek Private Storage
+                if (Storage::exists($file->link)) {
+                    return response()->file(Storage::path($file->link));
+                }
             }
             
             return response()->json(['message' => 'File tidak ditemukan'], 404);

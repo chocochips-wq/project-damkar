@@ -27,35 +27,54 @@ class DokumentasiController extends Controller
     }
 
     public function store(Request $request)
-{
-    $request->validate([
-        'nama_kegiatan' => 'required|string|max:255',
-        'keterangan' => 'required|string',
-        'tanggal_kegiatan' => 'required|date',
-        'thumbnail' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-    ]);
+    {
+        $request->validate([
+            'nama_kegiatan' => 'required|string|max:255',
+            'keterangan' => 'required|string',
+            'tanggal_kegiatan' => 'required|date',
+            'thumbnail' => 'required|image|mimes:jpeg,png,jpg,gif|max:40960',
+            'photos' => 'nullable|array',
+            'photos.*' => 'image|mimes:jpeg,png,jpg,gif|max:40960',
+        ]);
 
-    $thumbnailPath = null;
-    if ($request->hasFile('thumbnail')) {
-        // Simpan ke storage/app/public/dokumentasi
-        $file = $request->file('thumbnail');
-        $filename = time() . '_' . $file->getClientOriginalName();
-        $thumbnailPath = $file->storeAs('dokumentasi', $filename, 'public');
-        // Hasil: "dokumentasi/timestamp_filename.jpg"
+        $thumbnailPath = null;
+        if ($request->hasFile('thumbnail')) {
+            // Simpan ke storage/app/public/dokumentasi
+            $file = $request->file('thumbnail');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $thumbnailPath = $file->storeAs('dokumentasi', $filename, 'public');
+        }
+
+        $idKegiatan = substr(uniqid(), 0, 10);
+
+        Dokumentasi::create([
+            'id_kegiatan' => $idKegiatan,
+            'nama_kegiatan' => $request->nama_kegiatan,
+            'keterangan' => $request->keterangan,
+            'tanggal_kegiatan' => $request->tanggal_kegiatan,
+            'thumbnail' => $thumbnailPath,
+            'ekstensi' => $request->file('thumbnail')->getClientOriginalExtension(),
+            'created' => now(),
+        ]);
+
+        // Simpan foto-foto lainnya
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $photo) {
+                $photoFilename = time() . '_' . uniqid() . '_' . $photo->getClientOriginalName();
+                $photoPath = $photo->storeAs('dokumentasi', $photoFilename, 'public');
+                
+                DokumentasiFile::create([
+                    'id_file' => substr(uniqid(), 0, 10),
+                    'id_kegiatan' => $idKegiatan,
+                    'file_url' => $photoPath,
+                    'ekstensi' => $photo->getClientOriginalExtension(),
+                    'created' => now(),
+                ]);
+            }
+        }
+
+        return redirect()->route('dokumentasi')->with('success', 'Dokumentasi berhasil ditambahkan!');
     }
-
-    Dokumentasi::create([
-        'id_kegiatan' => substr(uniqid(), 0, 10),
-        'nama_kegiatan' => $request->nama_kegiatan,
-        'keterangan' => $request->keterangan,
-        'tanggal_kegiatan' => $request->tanggal_kegiatan,
-        'thumbnail' => $thumbnailPath, // Simpan path relatif
-        'ekstensi' => $request->file('thumbnail')->getClientOriginalExtension(),
-        'created' => now(),
-    ]);
-
-    return redirect()->route('dokumentasi')->with('success', 'Dokumentasi berhasil ditambahkan!');
-}
 
     public function show($id)
 {
@@ -68,7 +87,7 @@ class DokumentasiController extends Controller
 
     public function edit($id)
     {
-        $dokumentasi = Dokumentasi::where('id_kegiatan', $id)->firstOrFail();
+        $dokumentasi = Dokumentasi::with('files')->where('id_kegiatan', $id)->firstOrFail();
         return view('dokumentasi.edit', compact('dokumentasi'));
     }
 
@@ -80,10 +99,12 @@ class DokumentasiController extends Controller
             'nama_kegiatan' => 'required|string|max:255',
             'keterangan' => 'required|string',
             'tanggal_kegiatan' => 'required|date',
-            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:40960',
+            'photos' => 'nullable|array',
+            'photos.*' => 'image|mimes:jpeg,png,jpg,gif|max:40960',
         ]);
 
-        $thumbnailPath = $dokumentasi->thumbnail;
+        $thumbnailPath = $dokumentasi->getRawOriginal('thumbnail');
         if ($request->hasFile('thumbnail')) {
             // Delete old thumbnail
             if ($thumbnailPath && Storage::disk('public')->exists($thumbnailPath)) {
@@ -99,6 +120,22 @@ class DokumentasiController extends Controller
             'thumbnail' => $thumbnailPath,
             'ekstensi' => $request->hasFile('thumbnail') ? $request->file('thumbnail')->getClientOriginalExtension() : $dokumentasi->ekstensi,
         ]);
+
+        // Simpan foto-foto baru
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $photo) {
+                $photoFilename = time() . '_' . uniqid() . '_' . $photo->getClientOriginalName();
+                $photoPath = $photo->storeAs('dokumentasi', $photoFilename, 'public');
+                
+                DokumentasiFile::create([
+                    'id_file' => substr(uniqid(), 0, 10),
+                    'id_kegiatan' => $dokumentasi->id_kegiatan,
+                    'file_url' => $photoPath,
+                    'ekstensi' => $photo->getClientOriginalExtension(),
+                    'created' => now(),
+                ]);
+            }
+        }
 
         return redirect()->route('dokumentasi')->with('success', 'Dokumentasi berhasil diperbarui!');
     }
@@ -122,6 +159,27 @@ class DokumentasiController extends Controller
         $dokumentasi->delete();
 
         return redirect()->route('dokumentasi')->with('success', 'Dokumentasi berhasil dihapus!');
+    }
+
+    public function destroyFile($id)
+    {
+        try {
+            $file = DokumentasiFile::findOrFail($id);
+            $idKegiatan = $file->id_kegiatan;
+            
+            // Delete physical file if local
+            if ($file->file_url && !str_starts_with($file->file_url, 'http')) {
+                if (Storage::disk('public')->exists($file->file_url)) {
+                    Storage::disk('public')->delete($file->file_url);
+                }
+            }
+            
+            $file->delete();
+            
+            return redirect()->route('dokumentasi.edit', $idKegiatan)->with('success', 'Foto berhasil dihapus!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menghapus foto: ' . $e->getMessage());
+        }
     }
 
     public function downloadFile($id)

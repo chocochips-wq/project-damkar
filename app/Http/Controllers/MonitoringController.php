@@ -429,22 +429,28 @@ class MonitoringController extends Controller
             if (str_starts_with($file->link, 'http')) {
                 return redirect($file->link);
             }
-            // Normalisasi path lokal: prefer `file_path` kolom jika tersedia,
-            // atau hapus prefix '/storage/' jika link menyimpan URL publik.
-            $localPath = null;
+            
+            // 1. Cek berdasarkan file_path (biasanya public)
             if (!empty($file->file_path)) {
-                $localPath = ltrim($file->file_path, '/');
-            } elseif (!empty($file->link)) {
-                // jika link seperti '/storage/monitoring/..' atau 'storage/monitoring/...'
-                $candidate = ltrim(preg_replace('#^/storage/#', '', $file->link), '/');
-                $candidate = ltrim(preg_replace('#^storage/#', '', $candidate), '/');
-                if ($candidate) {
-                    $localPath = $candidate;
+                $path = ltrim($file->file_path, '/');
+                if (Storage::disk('public')->exists($path)) {
+                    return response()->file(Storage::disk('public')->path($path));
                 }
             }
 
-            if ($localPath && Storage::disk('public')->exists($localPath)) {
-                return Storage::disk('public')->download($localPath, $file->nama_file);
+            // 2. Cek berdasarkan link (Public)
+            if (!empty($file->link)) {
+                $cleanPath = preg_replace('#^/?storage/#', '', $file->link);
+                $cleanPath = ltrim($cleanPath, '/');
+                
+                if (Storage::disk('public')->exists($cleanPath)) {
+                    return response()->file(Storage::disk('public')->path($cleanPath));
+                }
+
+                // 3. Cek Private Storage
+                if (Storage::exists($file->link)) {
+                    return response()->file(Storage::path($file->link));
+                }
             }
             
             return response()->json(['message' => 'File tidak ditemukan'], 404);

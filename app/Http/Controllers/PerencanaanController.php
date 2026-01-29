@@ -430,13 +430,19 @@ class PerencanaanController extends Controller
                 return redirect($file->link);
             }
             
-            // Jika file lokal
+            // Jika file lokal (Public)
             if (Storage::disk('public')->exists($file->link)) {
-                return Storage::disk('public')->download($file->link, $file->nama_file);
+                return response()->file(Storage::disk('public')->path($file->link));
+            }
+
+            // Jika file lokal (Private / Default App Storage)
+            if (Storage::exists($file->link)) {
+                return response()->file(Storage::path($file->link));
             }
             
-            return response()->json(['message' => 'File tidak ditemukan'], 404);
+            return response()->json(['message' => 'File tidak ditemukan di server.'], 404);
         } catch (\Exception $e) {
+            \Log::error('Download Error: ' . $e->getMessage());
             return response()->json(['message' => 'Error: ' . $e->getMessage()], 500);
         }
     }

@@ -24,6 +24,38 @@ class DokumentasiFile extends Model
         'created' => 'datetime',
     ];
 
+    /**
+     * Accessor untuk mendapatkan URL gambar yang bisa di-embed
+     */
+    public function getImageUrlAttribute()
+    {
+        $url = $this->attributes['file_url'] ?? null;
+        
+        if (!$url) {
+            return asset('images/logo-damkar.png');
+        }
+
+        // Jika Google Drive link, konversi ke thumbnail URL
+        if (str_contains($url, 'drive.google.com')) {
+            if (preg_match('/\/d\/([a-zA-Z0-9_-]+)/', $url, $matches)) {
+                $fileId = $matches[1];
+                return "https://drive.google.com/thumbnail?id={$fileId}&sz=w800";
+            }
+        }
+
+        // Jika sudah full URL lainnya
+        if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://')) {
+            return $url;
+        }
+
+        // Jika path relatif dari storage
+        if (file_exists(storage_path('app/public/' . $url))) {
+            return asset('storage/' . $url);
+        }
+
+        return asset('images/logo-damkar.png');
+    }
+
     public function getThumbnailAttribute($value)
 {
     // Jika thumbnail adalah link Google Drive

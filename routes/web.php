@@ -69,6 +69,7 @@ Route::middleware('admin.auth')->group(function () {
     Route::put('/dokumentasi/{id}', [DokumentasiController::class, 'update'])->name('dokumentasi.update');
     Route::delete('/dokumentasi/{id}', [DokumentasiController::class, 'destroy'])->name('dokumentasi.destroy');
     Route::get('/dokumentasi/file/{id}/download', [DokumentasiController::class, 'downloadFile'])->name('dokumentasi.file.download');
+    Route::delete('/dokumentasi/file/{id}', [DokumentasiController::class, 'destroyFile'])->name('dokumentasi.file.destroy');
     Route::get('/dokumentasi/{id}/export-pdf', [DokumentasiController::class, 'exportPdf'])->name('dokumentasi.export-pdf');
     Route::post('/mekanisme/folder/create', [MekanismeController::class, 'createFolder'])->name('mekanisme.folder.create');
     Route::post('/mekanisme/file/upload', [MekanismeController::class, 'uploadFile'])->name('mekanisme.file.upload');

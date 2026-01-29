@@ -138,7 +138,7 @@
                 @forelse($files as $file)
                     <div class="relative p-4 border-2 border-gray-200 rounded-xl hover:border-green-400 hover:bg-green-50 transition-all duration-300 group">
                         <div class="flex items-center justify-between">
-                            <a href="{{ $file->link }}" target="_blank" class="flex items-center gap-4 flex-1 min-w-0">
+                            <a href="{{ $file->file_url }}" target="_blank" class="flex items-center gap-4 flex-1 min-w-0">
                                 <!-- Icon -->
                                 <div class="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md group-hover:shadow-lg transition-shadow">
                                     <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">

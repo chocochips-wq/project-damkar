@@ -126,7 +126,7 @@
             <!-- Thumbnail -->
             <div>
                 <label class="block text-sm font-semibold text-gray-900 mb-2">
-                    Foto Thumbnail
+                    Foto Utama (Thumbnail)
                     <span class="text-red-500">*</span>
                 </label>
                 <div class="relative">
@@ -138,7 +138,25 @@
                         class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
                     >
                 </div>
-                <p class="text-xs text-gray-500 mt-1">Format: JPG, PNG, GIF. Maksimal 2MB</p>
+                <p class="text-xs text-gray-500 mt-1">Format: JPG, PNG, GIF. Maksimal 40MB</p>
+            </div>
+
+            <!-- Foto Lainnya (Multiple) -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-900 mb-2">
+                    Foto Lainnya
+                    <span class="text-gray-400 font-normal">(Opsional)</span>
+                </label>
+                <div class="relative">
+                    <input
+                        type="file"
+                        name="photos[]"
+                        accept="image/*"
+                        multiple
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
+                    >
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Anda dapat memilih beberapa foto sekaligus. Format: JPG, PNG, GIF. Masing-masing maksimal 40MB</p>
             </div>
 
             <!-- Buttons -->

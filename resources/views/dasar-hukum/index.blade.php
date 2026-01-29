@@ -93,11 +93,19 @@
                             <p class="text-sm text-gray-600">Regulasi lengkap terkait pemadaman kebakaran dan penyelamatan</p>
                         </div>
                     </div>
-                    @if($dasarHukum->total() > 0)
-                        <span class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold">
-                            {{ $dasarHukum->total() }} Dokumen
-                        </span>
-                    @endif
+                    <div class="flex items-center gap-3">
+                        @if($dasarHukum->total() > 0)
+                            <span class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold">
+                                {{ $dasarHukum->total() }} Dokumen
+                            </span>
+                        @endif
+                        <button onclick="openAddModal()" class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg text-sm font-semibold hover:from-red-700 hover:to-red-800 transition flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            Tambah Peraturan
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -114,63 +122,30 @@
                             <!-- Content -->
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-start justify-between gap-4 mb-3">
-                                    <h4 class="text-base font-semibold text-gray-900 leading-relaxed group-hover:text-blue-600 transition">
+                                    <h4 class="text-base font-semibold text-gray-900 leading-relaxed transition">
                                         {{ $hukum->nama_hukum }}
                                     </h4>
 
-                                    <!-- Badge Type -->
-                                    @if(str_contains($hukum->nama_hukum, 'Undang-Undang'))
-                                        <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold whitespace-nowrap">
-                                            UU
-                                        </span>
-                                    @elseif(str_contains($hukum->nama_hukum, 'Peraturan Pemerintah'))
-                                        <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold whitespace-nowrap">
-                                            PP
-                                        </span>
-                                    @elseif(str_contains($hukum->nama_hukum, 'Peraturan Presiden'))
-                                        <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold whitespace-nowrap">
-                                            Perpres
-                                        </span>
-                                    @elseif(str_contains($hukum->nama_hukum, 'Peraturan Menteri'))
-                                        <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold whitespace-nowrap">
-                                            Permen
-                                        </span>
-                                    @elseif(str_contains($hukum->nama_hukum, 'Peraturan Daerah'))
-                                        <span class="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold whitespace-nowrap">
-                                            Perda
-                                        </span>
-                                    @elseif(str_contains($hukum->nama_hukum, 'Peraturan Walikota'))
-                                        <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold whitespace-nowrap">
-                                            Perwali
-                                        </span>
-                                    @else
-                                        <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold whitespace-nowrap">
-                                            Lainnya
-                                        </span>
-                                    @endif
+
                                 </div>
 
-                                <!-- Meta Info -->
-                                <div class="flex items-center gap-4 text-sm text-gray-500">
-                                    <span class="flex items-center gap-1.5">
-                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-                                        </svg>
-                                        {{ $hukum->pemilik }}
-                                    </span>
-                                    <span class="flex items-center gap-1.5">
-                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
-                                        </svg>
-                                        {{ $hukum->created->format('d M Y') }}
-                                    </span>
-                                    <span class="flex items-center gap-1.5">
-                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
-                                        </svg>
-                                        {{ $hukum->created->diffForHumans() }}
-                                    </span>
-                                </div>
+
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition">
+                                <button onclick="openEditModal('{{ $hukum->id_hukum }}', '{{ addslashes($hukum->nama_hukum) }}')" 
+                                        class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition" title="Edit">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                </button>
+                                <button onclick="deleteHukum('{{ $hukum->id_hukum }}')" 
+                                        class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition" title="Hapus">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -221,4 +196,141 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Dasar Hukum -->
+    <div id="hukumModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true" onclick="closeModal()">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-200">
+                <div class="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4">
+                    <h3 class="text-lg font-bold text-white" id="modalTitle">Tambah Peraturan</h3>
+                </div>
+                <form id="hukumForm" onsubmit="submitHukum(event)" class="p-6 space-y-4">
+                    @csrf
+                    <input type="hidden" id="hukumId">
+                    <input type="hidden" id="methodField" name="_method" value="POST">
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Peraturan / Undang-Undang</label>
+                        <textarea id="nama_hukum" name="nama_hukum" rows="4" required
+                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition"
+                            placeholder="Contoh: Undang-Undang Nomor 24 Tahun 2007 tentang Penanggulangan Bencana"></textarea>
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button type="button" onclick="document.getElementById('hukumModal').classList.add('hidden'); document.body.style.overflow='auto';"
+                            class="px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition">
+                            Batal
+                        </button>
+                        <button type="submit" id="btnSubmit"
+                            class="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition flex items-center gap-2">
+                            <span id="btnText">Simpan</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        // Ensure functions are globally available
+        window.openAddModal = function() {
+            const modalEl = document.getElementById('hukumModal');
+            document.getElementById('modalTitle').innerText = 'Tambah Peraturan';
+            document.getElementById('btnText').innerText = 'Simpan';
+            document.getElementById('hukumId').value = '';
+            document.getElementById('nama_hukum').value = '';
+            document.getElementById('methodField').value = 'POST';
+            modalEl.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        };
+
+        window.openEditModal = function(id, name) {
+            const modalEl = document.getElementById('hukumModal');
+            document.getElementById('modalTitle').innerText = 'Edit Peraturan';
+            document.getElementById('btnText').innerText = 'Perbarui';
+            document.getElementById('hukumId').value = id;
+            document.getElementById('nama_hukum').value = name;
+            document.getElementById('methodField').value = 'PUT';
+            modalEl.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        };
+
+        window.closeModal = function() {
+            const modalEl = document.getElementById('hukumModal');
+            if (modalEl) {
+                modalEl.classList.add('hidden');
+                document.body.style.overflow = 'auto'; // Restore scroll
+            }
+        };
+
+        window.submitHukum = async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('hukumId').value;
+            const url = id ? `/dasar-hukum/${id}` : '/dasar-hukum';
+            const formEl = document.getElementById('hukumForm');
+            const formData = new FormData(formEl);
+
+            const btn = document.getElementById('btnSubmit');
+            const originalBtnText = btn.innerHTML; // Store original text
+            btn.disabled = true;
+            btn.innerHTML = '<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Memproses...';
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST', // We use POST with _method=PUT if editing
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message || 'Terjadi kesalahan');
+                    btn.disabled = false;
+                    btn.innerHTML = id ? 'Perbarui' : 'Simpan';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan sistem');
+                btn.disabled = false;
+                btn.innerHTML = id ? 'Perbarui' : 'Simpan';
+            }
+        };
+
+        window.deleteHukum = async function(id) {
+            if (!confirm('Apakah Anda yakin ingin menghapus peraturan ini?')) return;
+
+            try {
+                const response = await fetch(`/dasar-hukum/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message || 'Gagal menghapus peraturan');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan sistem');
+            }
+        };
+    </script>
 @endsection

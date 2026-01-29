@@ -58,20 +58,11 @@
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             @foreach($dokumentasi->files as $file)
             <div class="group border rounded-lg overflow-hidden relative cursor-pointer">
-                {{-- Determine image source --}}
-                @if(str_starts_with($file->file_url, 'http'))
-                    {{-- Google Drive atau URL external --}}
-                    <img src="{{ $file->file_url }}"
-                         alt="Foto"
-                         class="w-full h-48 object-cover"
-                         onerror="this.style.display='none'">
-                @else
-                    {{-- File lokal --}}
-                    <img src="{{ asset('storage/' . $file->file_url) }}"
-                         alt="Foto"
-                         class="w-full h-48 object-cover"
-                         onerror="this.style.display='none'">
-                @endif
+                <img src="{{ $file->image_url }}"
+                     alt="Foto"
+                     class="w-full h-48 object-cover"
+                     onerror="this.onerror=null; this.src='{{ asset('images/logo-damkar.png') }}';"
+                     loading="lazy">
                 <a href="{{ route('dokumentasi.file.download', $file->id_file) }}" 
                    class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

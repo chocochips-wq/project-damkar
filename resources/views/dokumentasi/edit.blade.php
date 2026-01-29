@@ -139,7 +139,7 @@
             <!-- Thumbnail -->
             <div>
                 <label class="block text-sm font-semibold text-gray-900 mb-2">
-                    Ganti Foto Thumbnail
+                    Ganti Foto Utama (Thumbnail)
                 </label>
                 <div class="relative">
                     <input
@@ -150,6 +150,57 @@
                     >
                 </div>
                 <p class="text-xs text-gray-500 mt-1">Biarkan kosong jika tidak ingin mengganti. Format: JPG, PNG, GIF. Maksimal 2MB</p>
+            </div>
+
+            <!-- Foto Lainnya yang Sudah Ada -->
+            @if($dokumentasi->files && $dokumentasi->files->count() > 0)
+            <div>
+                <label class="block text-sm font-semibold text-gray-900 mb-2">
+                    Foto Lainnya ({{ $dokumentasi->files->count() }} foto)
+                </label>
+                <div class="grid grid-cols-3 gap-3">
+                    @foreach($dokumentasi->files as $file)
+                    <div class="relative group">
+                        <img src="{{ $file->image_url }}" alt="Foto" class="w-full h-24 object-cover rounded-lg border">
+                        <button type="button" 
+                                onclick="if(confirm('Hapus foto ini?')) document.getElementById('delete-file-{{ $file->id_file }}').submit();"
+                                class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+            <!-- Hidden forms for deleting files -->
+            @if($dokumentasi->files)
+                @foreach($dokumentasi->files as $file)
+                <form id="delete-file-{{ $file->id_file }}" action="{{ route('dokumentasi.file.destroy', $file->id_file) }}" method="POST" class="hidden">
+                    @csrf
+                    @method('DELETE')
+                </form>
+                @endforeach
+            @endif
+
+            <!-- Tambah Foto Lainnya (Multiple) -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-900 mb-2">
+                    Tambah Foto Lainnya
+                    <span class="text-gray-400 font-normal">(Opsional)</span>
+                </label>
+                <div class="relative">
+                    <input
+                        type="file"
+                        name="photos[]"
+                        accept="image/*"
+                        multiple
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    >
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Anda dapat memilih beberapa foto sekaligus. Format: JPG, PNG, GIF. Masing-masing maksimal 2MB</p>
             </div>
 
             <!-- Buttons -->
