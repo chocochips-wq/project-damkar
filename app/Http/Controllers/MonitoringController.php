@@ -14,6 +14,8 @@ class MonitoringController extends Controller
     {
         $search = $request->get('search');
         $folderId = $request->get('folder');
+        $startDate = $request->get('start_date');
+        $endDate = $request->get('end_date');
 
         $folders = FolderMonitoring::whereNull('id_parent')->get();
         $currentFolder = null;
@@ -31,9 +33,13 @@ class MonitoringController extends Controller
             return $query->where('id_folder_mon', $folderId);
         })->when($search, function($query) use ($search) {
             return $query->where('nama_file', 'like', '%' . $search . '%');
+        })->when($startDate, function($query) use ($startDate) {
+            return $query->whereDate('created', '>=', $startDate);
+        })->when($endDate, function($query) use ($endDate) {
+            return $query->whereDate('created', '<=', $endDate);
         })->orderBy('created', 'desc')->paginate(20);
 
-        return view('monitoring.index', compact('folders', 'files', 'currentFolder', 'breadcrumbs', 'search'));
+        return view('monitoring.index', compact('folders', 'files', 'currentFolder', 'breadcrumbs', 'search', 'startDate', 'endDate'));
     }
 
     public function createFolder(Request $request)
@@ -299,10 +305,10 @@ class MonitoringController extends Controller
         $folder = FolderMonitoring::findOrFail($id);
 
         // Recursively delete all child folders
-        $this->deleteChildFoldersMonitoring($folder->id_folder_monitoring);
+        $this->deleteChildFoldersMonitoring($folder->id_folder_mon);
 
         // Delete all files in this folder - get only file links first
-        $fileLinks = MonitoringPelaporan::where('id_folder_monitoring', $folder->id_folder_monitoring)
+        $fileLinks = MonitoringPelaporan::where('id_folder_mon', $folder->id_folder_mon)
             ->whereNotNull('link')
             ->pluck('link')
             ->toArray();
@@ -320,7 +326,7 @@ class MonitoringController extends Controller
         }
         
         // Delete database records using raw query to save memory
-        MonitoringPelaporan::where('id_folder_monitoring', $folder->id_folder_monitoring)->forceDelete();
+        MonitoringPelaporan::where('id_folder_mon', $folder->id_folder_mon)->forceDelete();
 
         // Delete the folder itself
         $folder->delete();
@@ -381,7 +387,7 @@ class MonitoringController extends Controller
     {
         // Get all child folder IDs only (not full model)
         $childIds = FolderMonitoring::where('id_parent', $parentId)
-            ->pluck('id_folder_monitoring')
+            ->pluck('id_folder_mon')
             ->toArray();
         
         foreach ($childIds as $childId) {
@@ -389,7 +395,7 @@ class MonitoringController extends Controller
             $this->deleteChildFoldersMonitoring($childId);
             
             // Get file links for this child folder
-            $fileLinks = MonitoringPelaporan::where('id_folder_monitoring', $childId)
+            $fileLinks = MonitoringPelaporan::where('id_folder_mon', $childId)
                 ->whereNotNull('link')
                 ->pluck('link')
                 ->toArray();
@@ -407,10 +413,89 @@ class MonitoringController extends Controller
             }
             
             // Delete all files in this child folder using raw query
-            MonitoringPelaporan::where('id_folder_monitoring', $childId)->forceDelete();
+            MonitoringPelaporan::where('id_folder_mon', $childId)->forceDelete();
             
             // Delete the child folder
-            FolderMonitoring::where('id_folder_monitoring', $childId)->forceDelete();
+            FolderMonitoring::where('id_folder_mon', $childId)->forceDelete();
+        }
+    }
+
+    public function downloadFile($id)
+    {
+        try {
+            $file = MonitoringPelaporan::findOrFail($id);
+            
+            // Jika link adalah URL (Google Drive atau external)
+            if (str_starts_with($file->link, 'http')) {
+                return redirect($file->link);
+            }
+            // Normalisasi path lokal: prefer `file_path` kolom jika tersedia,
+            // atau hapus prefix '/storage/' jika link menyimpan URL publik.
+            $localPath = null;
+            if (!empty($file->file_path)) {
+                $localPath = ltrim($file->file_path, '/');
+            } elseif (!empty($file->link)) {
+                // jika link seperti '/storage/monitoring/..' atau 'storage/monitoring/...'
+                $candidate = ltrim(preg_replace('#^/storage/#', '', $file->link), '/');
+                $candidate = ltrim(preg_replace('#^storage/#', '', $candidate), '/');
+                if ($candidate) {
+                    $localPath = $candidate;
+                }
+            }
+
+            if ($localPath && Storage::disk('public')->exists($localPath)) {
+                return Storage::disk('public')->download($localPath, $file->nama_file);
+            }
+            
+            return response()->json(['message' => 'File tidak ditemukan'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function addLink(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'nama_file' => 'required|string|max:255',
+                'link' => 'required|url',
+                'id_folder_mon' => 'nullable|string'
+            ]);
+
+            // Generate file ID dengan format FILMN + 5 digit
+            $lastFile = MonitoringPelaporan::orderBy('id_monitoring', 'desc')->first();
+            $nextNumber = 1;
+            if ($lastFile) {
+                $lastId = $lastFile->id_monitoring;
+                if (preg_match('/FILMN(\d+)/', $lastId, $matches)) {
+                    $nextNumber = intval($matches[1]) + 1;
+                }
+            }
+            $newId = 'FILMN' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+
+            $file = new MonitoringPelaporan();
+            $file->id_monitoring = $newId;
+            $file->id_folder_mon = $request->id_folder_mon;
+            $file->nama_file = $validated['nama_file'];
+            $file->link = $validated['link'];
+            $file->pemilik = Auth::guard('admin')->user()->nama_admin;
+            $file->created = now();
+            $file->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Link berhasil ditambahkan'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal: ' . implode(', ', array_merge(...array_values($e->errors())))
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

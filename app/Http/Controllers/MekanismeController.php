@@ -14,6 +14,8 @@ class MekanismeController extends Controller
     {
         $search = $request->get('search');
         $folderId = $request->get('folder');
+        $startDate = $request->get('start_date');
+        $endDate = $request->get('end_date');
 
         $folders = FolderMekanisme::whereNull('id_parent')->get();
         $currentFolder = null;
@@ -31,9 +33,13 @@ class MekanismeController extends Controller
             return $query->where('id_folder_mek', $folderId);
         })->when($search, function($query) use ($search) {
             return $query->where('nama_file', 'like', '%' . $search . '%');
+        })->when($startDate, function($query) use ($startDate) {
+            return $query->whereDate('created', '>=', $startDate);
+        })->when($endDate, function($query) use ($endDate) {
+            return $query->whereDate('created', '<=', $endDate);
         })->orderBy('created', 'desc')->paginate(20);
 
-        return view('mekanisme.index', compact('folders', 'files', 'currentFolder', 'breadcrumbs', 'search'));
+        return view('mekanisme.index', compact('folders', 'files', 'currentFolder', 'breadcrumbs', 'search', 'startDate', 'endDate'));
     }
 
     public function createFolder(Request $request)
@@ -299,10 +305,10 @@ class MekanismeController extends Controller
         $folder = FolderMekanisme::findOrFail($id);
 
         // Recursively delete all child folders
-        $this->deleteChildFoldersMekanisme($folder->id_folder_mekanisme);
+        $this->deleteChildFoldersMekanisme($folder->id_folder_mek);
 
         // Delete all files in this folder - get only file links first
-        $fileLinks = Mekanisme::where('id_folder_mekanisme', $folder->id_folder_mekanisme)
+        $fileLinks = Mekanisme::where('id_folder_mek', $folder->id_folder_mek)
             ->whereNotNull('link')
             ->pluck('link')
             ->toArray();
@@ -320,7 +326,7 @@ class MekanismeController extends Controller
         }
         
         // Delete database records using raw query to save memory
-        Mekanisme::where('id_folder_mekanisme', $folder->id_folder_mekanisme)->forceDelete();
+        Mekanisme::where('id_folder_mek', $folder->id_folder_mek)->forceDelete();
 
         // Delete the folder itself
         $folder->delete();
@@ -381,7 +387,7 @@ class MekanismeController extends Controller
     {
         // Get all child folder IDs only (not full model)
         $childIds = FolderMekanisme::where('id_parent', $parentId)
-            ->pluck('id_folder_mekanisme')
+            ->pluck('id_folder_mek')
             ->toArray();
         
         foreach ($childIds as $childId) {
@@ -389,7 +395,7 @@ class MekanismeController extends Controller
             $this->deleteChildFoldersMekanisme($childId);
             
             // Get file links for this child folder
-            $fileLinks = Mekanisme::where('id_folder_mekanisme', $childId)
+            $fileLinks = Mekanisme::where('id_folder_mek', $childId)
                 ->whereNotNull('link')
                 ->pluck('link')
                 ->toArray();
@@ -407,10 +413,77 @@ class MekanismeController extends Controller
             }
             
             // Delete all files in this child folder using raw query
-            Mekanisme::where('id_folder_mekanisme', $childId)->forceDelete();
+            Mekanisme::where('id_folder_mek', $childId)->forceDelete();
             
             // Delete the child folder
-            FolderMekanisme::where('id_folder_mekanisme', $childId)->forceDelete();
+            FolderMekanisme::where('id_folder_mek', $childId)->forceDelete();
+        }
+    }
+
+    public function downloadFile($id)
+    {
+        try {
+            $file = Mekanisme::findOrFail($id);
+            
+            // Jika link adalah URL (Google Drive atau external)
+            if (str_starts_with($file->link, 'http')) {
+                return redirect($file->link);
+            }
+            
+            // Jika file lokal
+            if (Storage::disk('public')->exists($file->link)) {
+                return Storage::disk('public')->download($file->link, $file->nama_file);
+            }
+            
+            return response()->json(['message' => 'File tidak ditemukan'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function addLink(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'nama_file' => 'required|string|max:255',
+                'link' => 'required|url',
+                'id_folder_mek' => 'nullable|string'
+            ]);
+
+            // Generate file ID dengan format FILMK + 5 digit
+            $lastFile = Mekanisme::orderBy('id_mekanisme', 'desc')->first();
+            $nextNumber = 1;
+            if ($lastFile) {
+                $lastId = $lastFile->id_mekanisme;
+                if (preg_match('/FILMK(\d+)/', $lastId, $matches)) {
+                    $nextNumber = intval($matches[1]) + 1;
+                }
+            }
+            $newId = 'FILMK' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+
+            $file = new Mekanisme();
+            $file->id_mekanisme = $newId;
+            $file->id_folder_mek = $request->id_folder_mek;
+            $file->nama_file = $validated['nama_file'];
+            $file->link = $validated['link'];
+            $file->pemilik = Auth::guard('admin')->user()->nama_admin;
+            $file->created = now();
+            $file->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Link berhasil ditambahkan'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal: ' . implode(', ', array_merge(...array_values($e->errors())))
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

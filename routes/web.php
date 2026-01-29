@@ -33,6 +33,8 @@ Route::middleware('admin.auth')->group(function () {
     Route::post('/perencanaan/folder/create', [PerencanaanController::class, 'createFolder'])->name('perencanaan.folder.create');
     Route::post('/perencanaan/file/upload', [PerencanaanController::class, 'uploadFile'])->name('perencanaan.file.upload');
     Route::post('/perencanaan/folder/upload', [PerencanaanController::class, 'uploadFolder'])->name('perencanaan.folder.upload');
+    Route::post('/perencanaan/link/add', [PerencanaanController::class, 'addLink'])->name('perencanaan.link.add');
+    Route::get('/perencanaan/file/{id}/download', [PerencanaanController::class, 'downloadFile'])->name('perencanaan.file.download');
 
     // Monitoring
     Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring');
@@ -43,13 +45,20 @@ Route::middleware('admin.auth')->group(function () {
     Route::delete('/monitoring/folder/{id}', [MonitoringController::class, 'deleteFolder'])->name('monitoring.folder.delete');
     Route::post('/monitoring/file/{id}/rename', [MonitoringController::class, 'renameFile'])->name('monitoring.file.rename');
     Route::delete('/monitoring/file/{id}', [MonitoringController::class, 'deleteFile'])->name('monitoring.file.delete');
+    Route::get('/monitoring/file/{id}/download', [MonitoringController::class, 'downloadFile'])->name('monitoring.file.download');
+    Route::post('/monitoring/link/add', [MonitoringController::class, 'addLink'])->name('monitoring.link.add');
 
     // Mekanisme
     Route::get('/mekanisme', [MekanismeController::class, 'index'])->name('mekanisme');
     Route::post('/mekanisme/folder/{id}/rename', [MekanismeController::class, 'renameFolder'])->name('mekanisme.folder.rename');
     Route::delete('/mekanisme/folder/{id}', [MekanismeController::class, 'deleteFolder'])->name('mekanisme.folder.delete');
     Route::post('/mekanisme/file/{id}/rename', [MekanismeController::class, 'renameFile'])->name('mekanisme.file.rename');
+    Route::post('/mekanisme/folder/create', [MekanismeController::class, 'createFolder'])->name('mekanisme.folder.create');
+    Route::post('/mekanisme/file/upload', [MekanismeController::class, 'uploadFile'])->name('mekanisme.file.upload');
+    Route::post('/mekanisme/folder/upload', [MekanismeController::class, 'uploadFolder'])->name('mekanisme.folder.upload');
+    Route::get('/mekanisme/file/{id}/download', [MekanismeController::class, 'downloadFile'])->name('mekanisme.file.download');
     Route::delete('/mekanisme/file/{id}', [MekanismeController::class, 'deleteFile'])->name('mekanisme.file.delete');
+    Route::post('/mekanisme/link/add', [MekanismeController::class, 'addLink'])->name('mekanisme.link.add');
 
     // Dokumentasi
     Route::get('/dokumentasi', [DokumentasiController::class, 'index'])->name('dokumentasi');
@@ -59,12 +68,19 @@ Route::middleware('admin.auth')->group(function () {
     Route::get('/dokumentasi/{id}/edit', [DokumentasiController::class, 'edit'])->name('dokumentasi.edit');
     Route::put('/dokumentasi/{id}', [DokumentasiController::class, 'update'])->name('dokumentasi.update');
     Route::delete('/dokumentasi/{id}', [DokumentasiController::class, 'destroy'])->name('dokumentasi.destroy');
+    Route::get('/dokumentasi/file/{id}/download', [DokumentasiController::class, 'downloadFile'])->name('dokumentasi.file.download');
+    Route::get('/dokumentasi/{id}/export-pdf', [DokumentasiController::class, 'exportPdf'])->name('dokumentasi.export-pdf');
     Route::post('/mekanisme/folder/create', [MekanismeController::class, 'createFolder'])->name('mekanisme.folder.create');
     Route::post('/mekanisme/file/upload', [MekanismeController::class, 'uploadFile'])->name('mekanisme.file.upload');
     Route::post('/mekanisme/folder/upload', [MekanismeController::class, 'uploadFolder'])->name('mekanisme.folder.upload');
 
     // Dasar Hukum
     Route::get('/dasar-hukum', [DasarHukumController::class, 'index'])->name('dasar-hukum');
+    Route::get('/dasar-hukum/create', [DasarHukumController::class, 'create'])->name('dasar-hukum.create');
+    Route::post('/dasar-hukum', [DasarHukumController::class, 'store'])->name('dasar-hukum.store');
+    Route::get('/dasar-hukum/{id}/edit', [DasarHukumController::class, 'edit'])->name('dasar-hukum.edit');
+    Route::put('/dasar-hukum/{id}', [DasarHukumController::class, 'update'])->name('dasar-hukum.update');
+    Route::delete('/dasar-hukum/{id}', [DasarHukumController::class, 'destroy'])->name('dasar-hukum.destroy');
 
     // Pengaturan
     Route::get('/pengaturan', [PengaturanController::class, 'index'])->name('pengaturan');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Dokumentasi;
+use App\Models\DokumentasiFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -121,5 +122,46 @@ class DokumentasiController extends Controller
         $dokumentasi->delete();
 
         return redirect()->route('dokumentasi')->with('success', 'Dokumentasi berhasil dihapus!');
+    }
+
+    public function downloadFile($id)
+    {
+        try {
+            $file = DokumentasiFile::findOrFail($id);
+            
+            // Jika file_url adalah URL (Google Drive atau external)
+            if (str_starts_with($file->file_url, 'http')) {
+                return redirect($file->file_url);
+            }
+            
+            // Jika file lokal
+            if (Storage::disk('public')->exists($file->file_url)) {
+                return Storage::disk('public')->download($file->file_url);
+            }
+            
+            return response()->json(['message' => 'File tidak ditemukan'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function exportPdf($id)
+    {
+        try {
+            $dokumentasi = Dokumentasi::where('id_kegiatan', $id)->firstOrFail();
+
+            $html = view('dokumentasi.pdf', compact('dokumentasi'))->render();
+
+            $pdf = \PDF::loadHTML($html)
+                ->setPaper('a4')
+                ->setOption('margin-top', 10)
+                ->setOption('margin-bottom', 10)
+                ->setOption('margin-left', 10)
+                ->setOption('margin-right', 10);
+
+            return $pdf->download('dokumentasi-' . $dokumentasi->id_kegiatan . '.pdf');
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error: ' . $e->getMessage()], 500);
+        }
     }
 }

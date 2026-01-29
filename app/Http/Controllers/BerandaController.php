@@ -7,6 +7,7 @@ use App\Models\MonitoringPelaporan;
 use App\Models\Mekanisme;
 use App\Models\Dokumentasi;
 use App\Models\DasarHukum;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 
 class BerandaController extends Controller
@@ -75,6 +76,9 @@ class BerandaController extends Controller
         $totalDokumentasi = Dokumentasi::count();
         $totalDasarHukum = DasarHukum::count();
 
+        // Get recent activities
+        $recentActivities = ActivityLog::getRecent(15);
+
         return view('beranda', compact(
             'recentPerencanaan',
             'recentMonitoring',
@@ -91,6 +95,7 @@ class BerandaController extends Controller
             'totalMekanisme',
             'totalDokumentasi',
             'totalDasarHukum',
+            'recentActivities',
             'search'
         ));
     }

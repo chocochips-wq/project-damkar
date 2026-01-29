@@ -12,9 +12,9 @@
 @section('content')
     <div class="space-y-6">
 
-        <!-- Search Bar -->
+        <!-- Search & Filter Bar -->
         <div class="bg-white rounded-lg shadow-sm p-6">
-            @include('components.search', ['placeholder' => 'Cari dokumen atau folder...'])
+            @include('components.advanced-search', ['placeholder' => 'Cari dokumen atau folder...'])
         </div>
 
         <!-- Breadcrumb Navigation -->
@@ -115,14 +115,23 @@
 
         <!-- Files List -->
         <div class="bg-white rounded-lg shadow-sm p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
-                </svg>
-                Dokumen
-                @if($files->total() > 0)
-                    <span class="text-sm text-gray-500">({{ $files->total() }})</span>
-                @endif
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                    </svg>
+                    Dokumen
+                    @if($files->total() > 0)
+                        <span class="text-sm text-gray-500">({{ $files->total() }})</span>
+                    @endif
+                </h3>
+                <button onclick="showAddLinkModal()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Tambah Link
+                </button>
+            </div>
             </h3>
 
             <div class="space-y-3">
@@ -170,7 +179,7 @@
                                 <!-- Dropdown Menu -->
                                 <div id="file-{{ $file->id_monitoring }}" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-200">
                                     <div class="py-1">
-                                        <a href="{{ $file->link }}" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
+                                        <a href="{{ route('monitoring.file.download', $file->id_monitoring) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                             </svg>
@@ -246,6 +255,66 @@
         }
     </script>
     <script>
+        // Rename Folder
+        async function renameFolder(id, currentName) {
+            showRenameModal('Folder', currentName, async (newName) => {
+                if (newName && newName !== currentName) {
+                    try {
+                        const response = await fetch(`/monitoring/folder/${id}/rename`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({ name: newName })
+                        });
+
+                        const data = await response.json();
+                        hideRenameModal();
+                        if (data.success) {
+                            showSuccessNotif(data.message);
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            showErrorNotif(data.message);
+                        }
+                    } catch (error) {
+                        hideRenameModal();
+                        showErrorNotif('Terjadi kesalahan');
+                    }
+                }
+            });
+        }
+
+        // Rename File
+        async function renameFile(id, currentName) {
+            showRenameModal('File', currentName, async (newName) => {
+                if (newName && newName !== currentName) {
+                    try {
+                        const response = await fetch(`/monitoring/file/${id}/rename`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({ name: newName })
+                        });
+
+                        const data = await response.json();
+                        hideRenameModal();
+                        if (data.success) {
+                            showSuccessNotif(data.message);
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            showErrorNotif(data.message);
+                        }
+                    } catch (error) {
+                        hideRenameModal();
+                        showErrorNotif('Terjadi kesalahan');
+                    }
+                }
+            });
+        }
+
         // Delete Folder (with modal confirmation)
         async function deleteFolder(id, name, url) {
             showDeleteModal('Folder', name, async () => {
@@ -432,5 +501,232 @@
             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
         </svg>
         <span id="errorNotifText">Error</span>
+    </div>
+
+    <!-- Rename Modal -->
+    <div id="renameModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full transform transition-all">
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-5 rounded-t-2xl flex items-center gap-3">
+                <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+                <h3 id="renameModalTitle" class="text-lg font-bold">Ubah Nama</h3>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="px-6 py-6">
+                <input type="text" id="renameInput" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Masukkan nama baru">
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex gap-3 px-6 py-4 border-t border-gray-200 rounded-b-2xl">
+                <button id="cancelRenameBtn" class="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition">Batal</button>
+                <button id="confirmRenameBtn" class="flex-1 px-4 py-2 text-white bg-blue-500 hover:bg-blue-600 rounded-lg font-medium transition">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let renameCallback = null;
+
+        function showRenameModal(type, currentName, onConfirm) {
+            const modal = document.getElementById('renameModal');
+            const modalTitle = document.getElementById('renameModalTitle');
+            const input = document.getElementById('renameInput');
+
+            modalTitle.textContent = `Ubah Nama ${type}`;
+            input.value = currentName;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            renameCallback = onConfirm;
+            
+            // Focus input after modal appears
+            setTimeout(() => input.focus(), 50);
+        }
+
+        function hideRenameModal() {
+            const modal = document.getElementById('renameModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            renameCallback = null;
+        }
+
+        function confirmRename() {
+            const input = document.getElementById('renameInput');
+            const newName = input.value.trim();
+            if (newName && renameCallback) {
+                renameCallback(newName);
+            }
+        }
+
+        // Event listeners for rename modal
+        document.addEventListener('DOMContentLoaded', function() {
+            const renameInput = document.getElementById('renameInput');
+            const confirmRenameBtn = document.getElementById('confirmRenameBtn');
+            const cancelRenameBtn = document.getElementById('cancelRenameBtn');
+            const renameModal = document.getElementById('renameModal');
+
+            // Confirm button click
+            confirmRenameBtn.addEventListener('click', confirmRename);
+
+            // Cancel button click
+            cancelRenameBtn.addEventListener('click', hideRenameModal);
+
+            // Enter key to confirm
+            renameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    confirmRename();
+                }
+            });
+
+            // Escape key to cancel
+            renameInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    hideRenameModal();
+                }
+            });
+
+            // Click outside modal to close
+            renameModal.addEventListener('click', (e) => {
+                if (e.target === renameModal) {
+                    hideRenameModal();
+                }
+            });
+        });
+
+        // Add Link Modal
+        function showAddLinkModal() {
+            const modal = document.getElementById('addLinkModal');
+            const input = document.getElementById('addLinkInput');
+            const nameInput = document.getElementById('addLinkNameInput');
+            
+            nameInput.value = '';
+            input.value = '';
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            setTimeout(() => nameInput.focus(), 50);
+        }
+
+        function hideAddLinkModal() {
+            const modal = document.getElementById('addLinkModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function confirmAddLink() {
+            const nameInput = document.getElementById('addLinkNameInput');
+            const urlInput = document.getElementById('addLinkInput');
+            const folderId = '{{ request('folder') }}';
+            
+            const namaFile = nameInput.value.trim();
+            const link = urlInput.value.trim();
+            
+            if (!namaFile || !link) {
+                showErrorNotif('Nama dan link harus diisi');
+                return;
+            }
+            
+            // Validate URL
+            try {
+                new URL(link);
+            } catch (e) {
+                showErrorNotif('URL tidak valid');
+                return;
+            }
+            
+            fetch('{{ route('monitoring.link.add') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    nama_file: namaFile,
+                    link: link,
+                    id_folder_mon: folderId || null
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideAddLinkModal();
+                if (data.success) {
+                    showSuccessNotif(data.message);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showErrorNotif(data.message);
+                }
+            })
+            .catch(error => {
+                hideAddLinkModal();
+                showErrorNotif('Terjadi kesalahan');
+            });
+        }
+
+        // Add Link Modal Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const addLinkInput = document.getElementById('addLinkInput');
+            const addLinkNameInput = document.getElementById('addLinkNameInput');
+            const addLinkModal = document.getElementById('addLinkModal');
+            const confirmAddLinkBtn = document.getElementById('confirmAddLinkBtn');
+            const cancelAddLinkBtn = document.getElementById('cancelAddLinkBtn');
+
+            confirmAddLinkBtn?.addEventListener('click', confirmAddLink);
+            cancelAddLinkBtn?.addEventListener('click', hideAddLinkModal);
+
+            addLinkInput?.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    confirmAddLink();
+                }
+            });
+
+            addLinkInput?.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    hideAddLinkModal();
+                }
+            });
+
+            addLinkModal?.addEventListener('click', (e) => {
+                if (e.target === addLinkModal) {
+                    hideAddLinkModal();
+                }
+            });
+        });
+    </script>
+
+    <!-- Add Link Modal -->
+    <div id="addLinkModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full transform transition-all">
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-5 rounded-t-2xl flex items-center gap-3">
+                <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.658 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                </svg>
+                <h3 class="text-lg font-bold">Tambah Link</h3>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="px-6 py-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nama Link</label>
+                    <input type="text" id="addLinkNameInput" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Contoh: Laporan Monitoring">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">URL/Link</label>
+                    <input type="url" id="addLinkInput" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="https://drive.google.com/... atau https://...">
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex gap-3 px-6 py-4 border-t border-gray-200 rounded-b-2xl">
+                <button id="cancelAddLinkBtn" class="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition">Batal</button>
+                <button id="confirmAddLinkBtn" class="flex-1 px-4 py-2 text-white bg-green-600 hover:bg-green-700 rounded-lg font-medium transition">Simpan</button>
+            </div>
+        </div>
     </div>
 @endsection

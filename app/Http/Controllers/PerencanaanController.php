@@ -14,6 +14,8 @@ class PerencanaanController extends Controller
     {
         $search = $request->get('search');
         $folderId = $request->get('folder');
+        $startDate = $request->get('start_date');
+        $endDate = $request->get('end_date');
 
         $folders = FolderPerencanaan::whereNull('id_parent')->get();
         $currentFolder = null;
@@ -31,9 +33,13 @@ class PerencanaanController extends Controller
             return $query->where('id_folder_per', $folderId);
         })->when($search, function($query) use ($search) {
             return $query->where('nama_file', 'like', '%' . $search . '%');
+        })->when($startDate, function($query) use ($startDate) {
+            return $query->whereDate('created', '>=', $startDate);
+        })->when($endDate, function($query) use ($endDate) {
+            return $query->whereDate('created', '<=', $endDate);
         })->orderBy('created', 'desc')->paginate(20);
 
-        return view('perencanaan.index', compact('folders', 'files', 'currentFolder', 'breadcrumbs', 'search'));
+        return view('perencanaan.index', compact('folders', 'files', 'currentFolder', 'breadcrumbs', 'search', 'startDate', 'endDate'));
     }
 
     public function createFolder(Request $request)
@@ -411,6 +417,73 @@ class PerencanaanController extends Controller
             
             // Delete the child folder
             FolderPerencanaan::where('id_folder_per', $childId)->forceDelete();
+        }
+    }
+
+    public function downloadFile($id)
+    {
+        try {
+            $file = Perencanaan::findOrFail($id);
+            
+            // Jika link adalah URL (Google Drive atau external)
+            if (str_starts_with($file->link, 'http')) {
+                return redirect($file->link);
+            }
+            
+            // Jika file lokal
+            if (Storage::disk('public')->exists($file->link)) {
+                return Storage::disk('public')->download($file->link, $file->nama_file);
+            }
+            
+            return response()->json(['message' => 'File tidak ditemukan'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function addLink(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'nama_file' => 'required|string|max:255',
+                'link' => 'required|url',
+                'id_folder_per' => 'nullable|string'
+            ]);
+
+            // Generate file ID dengan format FILEP + 5 digit
+            $lastFile = Perencanaan::orderBy('id_perencanaan', 'desc')->first();
+            $nextNumber = 1;
+            if ($lastFile) {
+                $lastId = $lastFile->id_perencanaan;
+                if (preg_match('/FILEP(\d+)/', $lastId, $matches)) {
+                    $nextNumber = intval($matches[1]) + 1;
+                }
+            }
+            $newId = 'FILEP' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+
+            $file = new Perencanaan();
+            $file->id_perencanaan = $newId;
+            $file->id_folder_per = $request->id_folder_per;
+            $file->nama_file = $validated['nama_file'];
+            $file->link = $validated['link'];
+            $file->pemilik = Auth::guard('admin')->user()->nama_admin;
+            $file->created = now();
+            $file->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Link berhasil ditambahkan'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal: ' . implode(', ', array_merge(...array_values($e->errors())))
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

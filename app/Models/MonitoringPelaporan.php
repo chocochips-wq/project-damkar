@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class MonitoringPelaporan extends Model
 {
@@ -36,27 +37,45 @@ class MonitoringPelaporan extends Model
     {
         $link = $this->link;
 
-        // Jika link kosong
-        if (!$link) {
-            return null;
-        }
-
-        // Jika sudah full URL (http:// atau https://)
-        if (str_starts_with($link, 'http://') || str_starts_with($link, 'https://')) {
-            // Jika Google Drive link
-            if (str_contains($link, 'drive.google.com')) {
-                // Format: /file/d/ID/view atau /file/d/ID/preview
-                if (preg_match('/\/d\/([a-zA-Z0-9_-]+)/', $link, $matches)) {
-                    return "https://drive.google.com/file/d/{$matches[1]}/view";
+        // Jika ada link yang sudah berupa URL lengkap
+        if ($link) {
+            if (str_starts_with($link, 'http://') || str_starts_with($link, 'https://')) {
+                // Google Drive special handling: normalisasi ke /view
+                if (str_contains($link, 'drive.google.com')) {
+                    if (preg_match('/\/d\/([a-zA-Z0-9_-]+)/', $link, $matches)) {
+                        return "https://drive.google.com/file/d/{$matches[1]}/view";
+                    }
                 }
+                return $link;
             }
-            return $link;
+
+            // Jika disimpan sebagai asset path '/storage/...' atau 'storage/...',
+            // cek apakah file benar-benar ada di storage; jika ya, arahkan ke route download lokal,
+            // jika tidak ada, anggap link tidak tersedia.
+            if (str_starts_with($link, '/storage/') || str_starts_with($link, 'storage/')) {
+                $candidate = ltrim(preg_replace('#^/storage/#', '', $link), '/');
+                $candidate = ltrim(preg_replace('#^storage/#', '', $candidate), '/');
+                if ($candidate && Storage::disk('public')->exists($candidate)) {
+                    return route('monitoring.file.download', $this->id_monitoring);
+                }
+                return null;
+            }
         }
 
-        // Jika path relatif dari storage
-        if (file_exists(storage_path('app/public/' . $link))) {
-            return asset('storage/' . $link);
+        // Fallback: jika ada kolom file_path (lokal di storage/app/public)
+        if (!empty($this->file_path)) {
+            $path = ltrim($this->file_path, '/');
+            if (Storage::disk('public')->exists($path)) {
+                return route('monitoring.file.download', $this->id_monitoring);
+            }
         }
+
+        // Cek apakah link (sebagai path relatif) ada di storage
+        if ($link && file_exists(storage_path('app/public/' . ltrim($link, '/')))) {
+            return route('monitoring.file.download', $this->id_monitoring);
+        }
+
+        return null;
 
         // Jika path relatif dari public
         if (file_exists(public_path($link))) {
