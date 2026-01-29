@@ -246,21 +246,134 @@
         }
     </script>
     <script>
-        // Delegate delete button clicks to shared handlers (if present)
+        // Delete Folder (with modal confirmation)
+        async function deleteFolder(id, name, url) {
+            showDeleteModal('Folder', name, async () => {
+                try {
+                    const endpoint = url || `/monitoring/folder/${id}`;
+                    const response = await fetch(endpoint, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    });
+
+                    const data = await response.json();
+                    hideDeleteModal();
+                    if (data.success) {
+                        showSuccessNotif(data.message);
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showErrorNotif(data.message);
+                    }
+                } catch (error) {
+                    hideDeleteModal();
+                    showErrorNotif('Terjadi kesalahan');
+                }
+            });
+        }
+
+        // Delete File (with modal confirmation)
+        async function deleteFile(id, name, url) {
+            showDeleteModal('File', name, async () => {
+                try {
+                    const endpoint = url || `/monitoring/file/${id}`;
+                    const response = await fetch(endpoint, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    });
+
+                    const data = await response.json();
+                    hideDeleteModal();
+                    if (data.success) {
+                        showSuccessNotif(data.message);
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showErrorNotif(data.message);
+                    }
+                } catch (error) {
+                    hideDeleteModal();
+                    showErrorNotif('Terjadi kesalahan');
+                }
+            });
+        }
+
+        // Modal Functions
+        function showDeleteModal(type, name, onConfirm) {
+            const modal = document.getElementById('deleteModal');
+            const modalTitle = document.getElementById('deleteModalTitle');
+            const modalText = document.getElementById('deleteModalText');
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
+            
+            modalTitle.textContent = `Hapus ${type}`;
+            modalText.innerHTML = `Apakah Anda yakin ingin menghapus <strong>${name}</strong>?<br><span class="text-sm text-gray-500">Tindakan ini tidak dapat dibatalkan.</span>`;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            confirmBtn.onclick = onConfirm;
+        }
+
+        function hideDeleteModal() {
+            const modal = document.getElementById('deleteModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function showSuccessNotif(message) {
+            const notif = document.getElementById('successNotif');
+            const notifText = document.getElementById('successNotifText');
+            notifText.textContent = message;
+            notif.classList.remove('hidden', 'translate-x-full');
+            setTimeout(() => {
+                notif.classList.add('translate-x-full');
+                setTimeout(() => notif.classList.add('hidden'), 300);
+            }, 3000);
+        }
+
+        function showErrorNotif(message) {
+            const notif = document.getElementById('errorNotif');
+            const notifText = document.getElementById('errorNotifText');
+            notifText.textContent = message;
+            notif.classList.remove('hidden', 'translate-x-full');
+            setTimeout(() => {
+                notif.classList.add('translate-x-full');
+                setTimeout(() => notif.classList.add('hidden'), 300);
+            }, 3000);
+        }
+
+        // Setup modal event listeners with delegation - delayed to ensure DOM is ready
+        setTimeout(function() {
+            document.addEventListener('click', function(e) {
+                // Handle cancel button click
+                const cancelBtn = e.target.closest('#cancelDeleteBtn');
+                if (cancelBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    hideDeleteModal();
+                    return;
+                }
+
+                // Handle clicking outside modal (on the dark overlay)
+                const modal = document.getElementById('deleteModal');
+                if (modal && e.target === modal) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    hideDeleteModal();
+                    return;
+                }
+            });
+        }, 100);
+
+        // Delegate delete button clicks to shared handlers
         document.addEventListener('click', function (e) {
             const btnFile = e.target.closest('.btn-delete-file');
             if (btnFile) {
                 e.preventDefault();
                 e.stopPropagation();
-                if (typeof deleteFile === 'function') {
-                    deleteFile(btnFile.dataset.id, btnFile.dataset.name, btnFile.dataset.url);
-                } else {
-                    // fallback: send DELETE
-                    if (confirm(`Apakah Anda yakin ingin menghapus file "${btnFile.dataset.name}"?`)) {
-                        fetch(btnFile.dataset.url, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } })
-                            .then(r => r.json()).then(d => { alert(d.message); if (d.success) location.reload(); }).catch(()=> alert('Terjadi kesalahan'));
-                    }
-                }
+                deleteFile(btnFile.dataset.id, btnFile.dataset.name, btnFile.dataset.url);
                 return;
             }
 
@@ -268,16 +381,56 @@
             if (btnFolder) {
                 e.preventDefault();
                 e.stopPropagation();
-                if (typeof deleteFolder === 'function') {
-                    deleteFolder(btnFolder.dataset.id, btnFolder.dataset.name, btnFolder.dataset.url);
-                } else {
-                    if (confirm(`Apakah Anda yakin ingin menghapus folder "${btnFolder.dataset.name}"?`)) {
-                        fetch(btnFolder.dataset.url, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } })
-                            .then(r => r.json()).then(d => { alert(d.message); if (d.success) location.reload(); }).catch(()=> alert('Terjadi kesalahan'));
-                    }
-                }
+                deleteFolder(btnFolder.dataset.id, btnFolder.dataset.name, btnFolder.dataset.url);
                 return;
             }
         });
     </script>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full transform transition-all">
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-5 rounded-t-2xl flex items-center gap-3">
+                <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <h3 id="deleteModalTitle" class="text-lg font-bold">Hapus Item</h3>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="px-6 py-6">
+                <p id="deleteModalText" class="text-gray-700 text-center leading-relaxed"></p>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="bg-gray-50 px-6 py-4 rounded-b-2xl flex gap-3 justify-end">
+                <button id="cancelDeleteBtn" type="button" class="px-5 py-2.5 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium transition-colors">
+                    Batal
+                </button>
+                <button id="confirmDeleteBtn" type="button" class="px-5 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition-colors flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Notification -->
+    <div id="successNotif" class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 transform transition-transform duration-300 translate-x-full z-40">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span id="successNotifText">Success</span>
+    </div>
+
+    <!-- Error Notification -->
+    <div id="errorNotif" class="fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 transform transition-transform duration-300 translate-x-full z-40">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+        <span id="errorNotifText">Error</span>
+    </div>
 @endsection

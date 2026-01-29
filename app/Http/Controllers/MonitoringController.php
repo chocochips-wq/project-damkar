@@ -299,16 +299,28 @@ class MonitoringController extends Controller
         $folder = FolderMonitoring::findOrFail($id);
 
         // Recursively delete all child folders
-        $this->deleteChildFoldersMonitoring($folder);
+        $this->deleteChildFoldersMonitoring($folder->id_folder_monitoring);
 
-        // Delete all files in this folder
-        $files = MonitoringPelaporan::where('id_folder_monitoring', $folder->id)->get();
-        foreach ($files as $file) {
-            if ($file->file_path) {
-                Storage::disk('public')->delete($file->file_path);
+        // Delete all files in this folder - get only file links first
+        $fileLinks = MonitoringPelaporan::where('id_folder_monitoring', $folder->id_folder_monitoring)
+            ->whereNotNull('link')
+            ->pluck('link')
+            ->toArray();
+        
+        // Delete files from storage (if they are actual file paths, not URLs)
+        foreach ($fileLinks as $fileLink) {
+            try {
+                // Only delete if it's a file path, not a URL
+                if (!str_starts_with($fileLink, 'http')) {
+                    Storage::disk('public')->delete($fileLink);
+                }
+            } catch (\Exception $e) {
+                // Continue even if file doesn't exist
             }
-            $file->delete();
         }
+        
+        // Delete database records using raw query to save memory
+        MonitoringPelaporan::where('id_folder_monitoring', $folder->id_folder_monitoring)->forceDelete();
 
         // Delete the folder itself
         $folder->delete();
@@ -365,26 +377,40 @@ class MonitoringController extends Controller
         return $breadcrumbs;
     }
 
-    private function deleteChildFoldersMonitoring($folder)
+    private function deleteChildFoldersMonitoring($parentId)
     {
-        // Get all child folders
-        $children = FolderMonitoring::where('id_parent', $folder->id)->get();
+        // Get all child folder IDs only (not full model)
+        $childIds = FolderMonitoring::where('id_parent', $parentId)
+            ->pluck('id_folder_monitoring')
+            ->toArray();
         
-        foreach ($children as $child) {
+        foreach ($childIds as $childId) {
             // Recursively delete this child's children
-            $this->deleteChildFoldersMonitoring($child);
+            $this->deleteChildFoldersMonitoring($childId);
             
-            // Delete all files in this child folder
-            $files = MonitoringPelaporan::where('id_folder_monitoring', $child->id)->get();
-            foreach ($files as $file) {
-                if ($file->file_path) {
-                    Storage::disk('public')->delete($file->file_path);
+            // Get file links for this child folder
+            $fileLinks = MonitoringPelaporan::where('id_folder_monitoring', $childId)
+                ->whereNotNull('link')
+                ->pluck('link')
+                ->toArray();
+            
+            // Delete files from storage (if they are actual file paths, not URLs)
+            foreach ($fileLinks as $fileLink) {
+                try {
+                    // Only delete if it's a file path, not a URL
+                    if (!str_starts_with($fileLink, 'http')) {
+                        Storage::disk('public')->delete($fileLink);
+                    }
+                } catch (\Exception $e) {
+                    // Continue even if file doesn't exist
                 }
-                $file->delete();
             }
             
+            // Delete all files in this child folder using raw query
+            MonitoringPelaporan::where('id_folder_monitoring', $childId)->forceDelete();
+            
             // Delete the child folder
-            $child->delete();
+            FolderMonitoring::where('id_folder_monitoring', $childId)->forceDelete();
         }
     }
 }

@@ -299,16 +299,28 @@ class MekanismeController extends Controller
         $folder = FolderMekanisme::findOrFail($id);
 
         // Recursively delete all child folders
-        $this->deleteChildFoldersMekanisme($folder);
+        $this->deleteChildFoldersMekanisme($folder->id_folder_mekanisme);
 
-        // Delete all files in this folder
-        $files = Mekanisme::where('id_folder_mekanisme', $folder->id)->get();
-        foreach ($files as $file) {
-            if ($file->file_path) {
-                Storage::disk('public')->delete($file->file_path);
+        // Delete all files in this folder - get only file links first
+        $fileLinks = Mekanisme::where('id_folder_mekanisme', $folder->id_folder_mekanisme)
+            ->whereNotNull('link')
+            ->pluck('link')
+            ->toArray();
+        
+        // Delete files from storage (if they are actual file paths, not URLs)
+        foreach ($fileLinks as $fileLink) {
+            try {
+                // Only delete if it's a file path, not a URL
+                if (!str_starts_with($fileLink, 'http')) {
+                    Storage::disk('public')->delete($fileLink);
+                }
+            } catch (\Exception $e) {
+                // Continue even if file doesn't exist
             }
-            $file->delete();
         }
+        
+        // Delete database records using raw query to save memory
+        Mekanisme::where('id_folder_mekanisme', $folder->id_folder_mekanisme)->forceDelete();
 
         // Delete the folder itself
         $folder->delete();
@@ -365,26 +377,40 @@ class MekanismeController extends Controller
         return $breadcrumbs;
     }
 
-    private function deleteChildFoldersMekanisme($folder)
+    private function deleteChildFoldersMekanisme($parentId)
     {
-        // Get all child folders
-        $children = FolderMekanisme::where('id_parent', $folder->id)->get();
+        // Get all child folder IDs only (not full model)
+        $childIds = FolderMekanisme::where('id_parent', $parentId)
+            ->pluck('id_folder_mekanisme')
+            ->toArray();
         
-        foreach ($children as $child) {
+        foreach ($childIds as $childId) {
             // Recursively delete this child's children
-            $this->deleteChildFoldersMekanisme($child);
+            $this->deleteChildFoldersMekanisme($childId);
             
-            // Delete all files in this child folder
-            $files = Mekanisme::where('id_folder_mekanisme', $child->id)->get();
-            foreach ($files as $file) {
-                if ($file->file_path) {
-                    Storage::disk('public')->delete($file->file_path);
+            // Get file links for this child folder
+            $fileLinks = Mekanisme::where('id_folder_mekanisme', $childId)
+                ->whereNotNull('link')
+                ->pluck('link')
+                ->toArray();
+            
+            // Delete files from storage (if they are actual file paths, not URLs)
+            foreach ($fileLinks as $fileLink) {
+                try {
+                    // Only delete if it's a file path, not a URL
+                    if (!str_starts_with($fileLink, 'http')) {
+                        Storage::disk('public')->delete($fileLink);
+                    }
+                } catch (\Exception $e) {
+                    // Continue even if file doesn't exist
                 }
-                $file->delete();
             }
             
+            // Delete all files in this child folder using raw query
+            Mekanisme::where('id_folder_mekanisme', $childId)->forceDelete();
+            
             // Delete the child folder
-            $child->delete();
+            FolderMekanisme::where('id_folder_mekanisme', $childId)->forceDelete();
         }
     }
 }
