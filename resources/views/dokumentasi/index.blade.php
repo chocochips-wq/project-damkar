@@ -3,9 +3,9 @@
 @section('title', 'Dokumentasi Kegiatan')
 
 @section('header-title')
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900">Dokumentasi Kegiatan</h1>
-        <p class="text-sm text-gray-600">Kumpulan foto kegiatan</p>
+    <div class="min-w-0">
+        <h1 class="text-lg md:text-2xl font-bold text-gray-900 truncate">Dokumentasi Kegiatan</h1>
+        <p class="text-xs md:text-sm text-gray-600 truncate md:whitespace-normal md:line-clamp-none">Kumpulan foto kegiatan</p>
     </div>
 @endsection
 
@@ -19,24 +19,26 @@
 
     <!-- Gallery Grid -->
     <div class="bg-white rounded-lg shadow-sm p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H4z"/>
-                </svg>
-                Galeri Foto
-                @if($dokumentasi->total() > 0)
-                    <span class="text-sm text-gray-500">({{ $dokumentasi->total() }})</span>
-                @endif
-            </div>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2 min-w-0">
+                <div class="flex items-center gap-2 min-w-0">
+                    <svg class="w-5 h-5 text-red-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H4z"/>
+                    </svg>
+                    <span class="truncate">Galeri Foto</span>
+                    @if($dokumentasi->total() > 0)
+                        <span class="text-sm text-gray-500 whitespace-nowrap">({{ $dokumentasi->total() }})</span>
+                    @endif
+                </div>
+            </h3>
             <a href="{{ route('dokumentasi.create') }}"
-               class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-700 transition flex items-center gap-2">
+               class="bg-red-600 text-white px-3 py-2 sm:px-4 rounded-lg text-sm font-semibold hover:bg-red-700 transition flex items-center justify-center gap-2 flex-shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                 </svg>
-                Tambah Dokumentasi
+                <span>Tambah Dokumentasi</span>
             </a>
-        </h3>
+        </div>
 
         @if($dokumentasi->count() > 0)
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-5">
@@ -73,7 +75,7 @@
                                 {{ $item->keterangan }}
                             </p>
 
-                            <div class="flex items-center justify-between text-xs text-gray-500 pt-2">
+                            <div class="flex flex-wrap items-center gap-3 mt-1 text-xs md:text-sm text-gray-500">
                                 <span class="flex items-center gap-1">
                                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1z"/>

@@ -1,9 +1,18 @@
 <header class="bg-white border-b border-gray-200">
-    <div class="flex items-center justify-between px-6 py-3 gap-6">
+    <div class="flex items-center justify-between px-4 md:px-6 py-3 gap-3 md:gap-6">
 
-        {{-- JUDUL HALAMAN --}}
-        <div class="flex-shrink-0">
-            @yield('header-title')
+        {{-- JUDUL HALAMAN & BURGER MENU --}}
+        <div class="flex items-center gap-4 flex-shrink-0">
+            {{-- Burger Button for Mobile --}}
+            <button id="burgerBtn" class="md:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+
+            <div>
+                @yield('header-title')
+            </div>
         </div>
 
         {{-- USER INFO --}}

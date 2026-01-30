@@ -3,9 +3,9 @@
 @section('title', 'Beranda')
 
 @section('header-title')
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900">Beranda</h1>
-        <p class="text-sm text-gray-600">Ringkasan data dan statistik sistem</p>
+    <div class="min-w-0">
+        <h1 class="text-lg md:text-2xl font-bold text-gray-900 truncate">Beranda</h1>
+        <p class="text-xs md:text-sm text-gray-600 truncate md:whitespace-normal md:line-clamp-none">Ringkasan data dan statistik sistem</p>
     </div>
 @endsection
 
@@ -18,17 +18,17 @@
         </div>
 
         {{-- STAT BOX --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
 
             <a href="{{ route('perencanaan') }}" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md hover:border-purple-300 border-2 border-transparent transition cursor-pointer">
-                <div class="flex items-center justify-between">
-                    <div>
+                <div class="flex items-center justify-between gap-4">
+                    <div class="min-w-0">
                         <p class="text-sm text-gray-500">Perencanaan</p>
                         <h3 class="text-3xl font-bold text-purple-700 mt-2">
                             {{ $totalPerencanaan }}
                         </h3>
                     </div>
-                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
                         <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
@@ -38,14 +38,14 @@
             </a>
 
             <a href="{{ route('monitoring') }}" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md hover:border-blue-300 border-2 border-transparent transition cursor-pointer">
-                <div class="flex items-center justify-between">
-                    <div>
+                <div class="flex items-center justify-between gap-4">
+                    <div class="min-w-0">
                         <p class="text-sm text-gray-500">Monitoring</p>
                         <h3 class="text-3xl font-bold text-blue-600 mt-2">
                             {{ $totalMonitoring }}
                         </h3>
                     </div>
-                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
                         <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                         </svg>
@@ -55,14 +55,14 @@
             </a>
 
             <a href="{{ route('mekanisme') }}" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md hover:border-green-300 border-2 border-transparent transition cursor-pointer">
-                <div class="flex items-center justify-between">
-                    <div>
+                <div class="flex items-center justify-between gap-4">
+                    <div class="min-w-0">
                         <p class="text-sm text-gray-500">Mekanisme</p>
                         <h3 class="text-3xl font-bold text-green-600 mt-2">
                             {{ $totalMekanisme }}
                         </h3>
                     </div>
-                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
                         <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                         </svg>
@@ -72,14 +72,14 @@
             </a>
 
             <a href="{{ route('dokumentasi') }}" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md hover:border-orange-300 border-2 border-transparent transition cursor-pointer">
-                <div class="flex items-center justify-between">
-                    <div>
+                <div class="flex items-center justify-between gap-4">
+                    <div class="min-w-0">
                         <p class="text-sm text-gray-500">Dokumentasi</p>
                         <h3 class="text-3xl font-bold text-orange-600 mt-2">
                             {{ $totalDokumentasi }}
                         </h3>
                     </div>
-                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
                         <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                         </svg>
@@ -89,14 +89,14 @@
             </a>
 
             <a href="{{ route('dasar-hukum') }}" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md hover:border-red-300 border-2 border-transparent transition cursor-pointer">
-                <div class="flex items-center justify-between">
-                    <div>
+                <div class="flex items-center justify-between gap-4">
+                    <div class="min-w-0">
                         <p class="text-sm text-gray-500">Dasar Hukum</p>
                         <h3 class="text-3xl font-bold text-red-600 mt-2">
                             {{ $totalDasarHukum }}
                         </h3>
                     </div>
-                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
                         <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C6.5 6.253 2 10.998 2 17.25S6.5 28 12 28s10-4.745 10-10.75S17.5 6.253 12 6.253z"/>
                         </svg>
@@ -143,7 +143,7 @@
                                     <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1z"/>
                                     </svg>
-                                    <p class="text-sm text-gray-500">
+                                    <p class="text-xs md:text-sm text-gray-500 whitespace-nowrap">
                                         {{ $item->created->format('d M Y') }}
                                     </p>
                                 </div>
@@ -166,7 +166,7 @@
                                     <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1z"/>
                                     </svg>
-                                    <p class="text-sm text-gray-500">
+                                    <p class="text-xs md:text-sm text-gray-500 whitespace-nowrap">
                                         {{ $item->created->format('d M Y') }}
                                     </p>
                                 </div>
@@ -216,7 +216,7 @@
                                     <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1z"/>
                                     </svg>
-                                    <p class="text-sm text-gray-500">
+                                    <p class="text-xs md:text-sm text-gray-500 whitespace-nowrap">
                                         {{ $item->created->format('d M Y') }}
                                     </p>
                                 </div>
@@ -239,7 +239,7 @@
                                     <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1z"/>
                                     </svg>
-                                    <p class="text-sm text-gray-500">
+                                    <p class="text-xs md:text-sm text-gray-500 whitespace-nowrap">
                                         {{ $item->created->format('d M Y') }}
                                     </p>
                                 </div>

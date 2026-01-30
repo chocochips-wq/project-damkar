@@ -3,9 +3,9 @@
 @section('title', 'Monitoring & Pelaporan')
 
 @section('header-title')
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900">Monitoring & Pelaporan</h1>
-        <p class="text-sm text-gray-600">Dokumen monitoring dan pelaporan kegiatan</p>
+    <div class="min-w-0">
+        <h1 class="text-lg md:text-2xl font-bold text-gray-900 truncate">Monitoring & Pelaporan</h1>
+        <p class="text-xs md:text-sm text-gray-600 truncate md:whitespace-normal md:line-clamp-none">Dokumen monitoring dan pelaporan kegiatan</p>
     </div>
 @endsection
 
@@ -115,21 +115,21 @@
 
         <!-- Files List -->
         <div class="bg-white rounded-lg shadow-sm p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2 min-w-0">
+                    <svg class="w-5 h-5 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
                     </svg>
-                    Dokumen
+                    <span class="truncate">Dokumen</span>
                     @if($files->total() > 0)
-                        <span class="text-sm text-gray-500">({{ $files->total() }})</span>
+                        <span class="text-sm text-gray-500 whitespace-nowrap">({{ $files->total() }})</span>
                     @endif
                 </h3>
-                <button onclick="showAddLinkModal()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition flex items-center gap-2">
+                <button onclick="showAddLinkModal()" class="px-3 py-2 sm:px-4 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition flex items-center justify-center gap-2 flex-shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
-                    Tambah Link
+                    <span>Tambah Link</span>
                 </button>
             </div>
             </h3>
@@ -151,7 +151,7 @@
                                     <p class="font-semibold text-gray-900 truncate group-hover:text-green-700 transition">
                                         {{ $file->nama_file }}
                                     </p>
-                                    <div class="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                                    <div class="flex flex-wrap items-center gap-3 mt-1 text-xs md:text-sm text-gray-500">
                                         <span class="flex items-center gap-1">
                                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>

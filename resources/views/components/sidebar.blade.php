@@ -1,12 +1,21 @@
-<aside class="w-64 bg-gray-100 border-r border-gray-200 flex flex-col">
+<aside id="sidebar" class="hidden md:flex flex-col w-64 bg-gray-100 border-r border-gray-200 fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 -translate-x-full md:relative md:translate-x-0">
 
     {{-- LOGO --}}
-    <div class="h-16 flex items-center gap-3 px-6 border-b bg-white">
-        <img src="{{ asset('images/logo-damkar.png') }}" alt="Logo" class="h-8">
-        <div>
-            <h1 class="text-sm font-bold text-gray-900">PEP DAMKAR</h1>
-            <p class="text-xs text-gray-500">Manajemen Dokumen</p>
+    <div class="h-16 flex items-center justify-between px-6 border-b bg-white">
+        <div class="flex items-center gap-3">
+            <img src="{{ asset('images/logo-damkar.png') }}" alt="Logo" class="h-8">
+            <div>
+                <h1 class="text-sm font-bold text-gray-900">PEP DAMKAR</h1>
+                <p class="text-xs text-gray-500">Manajemen Dokumen</p>
+            </div>
         </div>
+        
+        {{-- Close Button for Mobile --}}
+        <button id="closeSidebarBtn" class="md:hidden text-gray-500 hover:text-gray-700">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
     </div>
 
     {{-- NEW BUTTON --}}

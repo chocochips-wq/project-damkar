@@ -22,6 +22,9 @@
         {{-- Sidebar --}}
         @include('components.sidebar')
 
+        {{-- Mobile Overlay --}}
+        <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden transition-opacity duration-300 opacity-0"></div>
+
         {{-- Main --}}
         <div class="flex-1 flex flex-col overflow-hidden">
 
@@ -47,6 +50,50 @@
 
     {{-- App Scripts --}}
     <script src="{{ asset('js/app.js') }}"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const burgerBtn = document.getElementById('burgerBtn');
+            const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+
+            function openSidebar() {
+                sidebar.classList.remove('hidden', '-translate-x-full');
+                sidebar.classList.add('flex', 'translate-x-0');
+                overlay.classList.remove('hidden');
+                // Small delay to allow transition
+                setTimeout(() => {
+                    overlay.classList.remove('opacity-0');
+                }, 10);
+            }
+
+            function closeSidebar() {
+                sidebar.classList.remove('translate-x-0');
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('opacity-0');
+                
+                // Wait for transition to finish before hiding
+                setTimeout(() => {
+                    sidebar.classList.add('hidden');
+                    sidebar.classList.remove('flex');
+                    overlay.classList.add('hidden');
+                }, 300);
+            }
+
+            if (burgerBtn) {
+                burgerBtn.addEventListener('click', openSidebar);
+            }
+
+            if (closeSidebarBtn) {
+                closeSidebarBtn.addEventListener('click', closeSidebar);
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', closeSidebar);
+            }
+        });
+    </script>
 
 </body>
 </html>

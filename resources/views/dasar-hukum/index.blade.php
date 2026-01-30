@@ -3,9 +3,9 @@
 @section('title', 'Dasar Hukum')
 
 @section('header-title')
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900">Dasar Hukum</h1>
-        <p class="text-sm text-gray-600">Regulasi dan peraturan yang mendasari kegiatan pemadaman kebakaran</p>
+    <div class="min-w-0">
+        <h1 class="text-lg md:text-2xl font-bold text-gray-900 truncate">Dasar Hukum</h1>
+        <p class="text-xs md:text-sm text-gray-600 truncate md:whitespace-normal md:line-clamp-none">Regulasi dan peraturan terkait pemadaman</p>
     </div>
 @endsection
 
@@ -14,7 +14,7 @@
 
         <!-- Search Bar -->
         <div class="bg-white rounded-lg shadow-sm p-6">
-            @include('components.search', ['placeholder' => 'Cari peraturan atau undang-undang...'])
+            @include('components.search', ['placeholder' => 'Cari peraturan...'])
         </div>
 
         <!-- Stats Card -->
@@ -80,30 +80,31 @@
         <!-- Main Content -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200">
             <!-- Header -->
-            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
-                <div class="flex items-center justify-between">
+            <div class="px-4 md:px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                        <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
                             <svg class="w-6 h-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z" clip-rule="evenodd"/>
                             </svg>
                         </div>
-                        <div>
-                            <h3 class="text-lg font-bold text-gray-900">Daftar Peraturan</h3>
-                            <p class="text-sm text-gray-600">Regulasi lengkap terkait pemadaman kebakaran dan penyelamatan</p>
+                        <div class="min-w-0">
+                            <h3 class="text-lg font-bold text-gray-900 truncate">Daftar Peraturan</h3>
+                            <p class="text-sm text-gray-600 truncate">Regulasi lengkap pemadaman</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 self-end md:self-center">
                         @if($dasarHukum->total() > 0)
-                            <span class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold">
+                            <span class="px-3 py-1.5 md:px-4 md:py-2 bg-blue-100 text-blue-700 rounded-lg text-xs md:text-sm font-semibold whitespace-nowrap">
                                 {{ $dasarHukum->total() }} Dokumen
                             </span>
                         @endif
-                        <button onclick="openAddModal()" class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg text-sm font-semibold hover:from-red-700 hover:to-red-800 transition flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button onclick="openAddModal()" class="px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg text-xs md:text-sm font-semibold hover:from-red-700 hover:to-red-800 transition flex items-center gap-2 whitespace-nowrap">
+                            <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                             </svg>
-                            Tambah Peraturan
+                            <span class="hidden md:inline">Tambah Peraturan</span>
+                            <span class="md:hidden">Tambah</span>
                         </button>
                     </div>
                 </div>
@@ -133,7 +134,7 @@
                             </div>
 
                             <!-- Action Buttons -->
-                            <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition">
+                            <div class="flex flex-wrap items-center gap-3 mt-1 text-xs md:text-sm text-gray-500 opacity-0 group-hover:opacity-100 transition">
                                 <button onclick="openEditModal('{{ $hukum->id_hukum }}', '{{ addslashes($hukum->nama_hukum) }}')" 
                                         class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition" title="Edit">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
